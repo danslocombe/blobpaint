@@ -1,5 +1,6 @@
-import { GetBrushConfig } from "./components/ui.js";
-import {BlobCanvas, Brush} from "./node_modules/blobrust/blobrust.js";
+import "./components/ui.js"
+import { GetBrush } from "./components/brush.js";
+import {BlobCanvas, Brush} from "../node_modules/blobrust/blobrust.js";
 
   const w = 256;
   const h = 200;
@@ -46,14 +47,7 @@ import {BlobCanvas, Brush} from "./node_modules/blobrust/blobrust.js";
 
     if (painting) {
       if (mouseX > 0 && mouseX < 1 && mouseY > 0 && mouseY < 1 ) {
-        let brushConfig = GetBrushConfig();
-        if (!brush || brushConfig.dirty) {
-          brush = Brush.new_inv(brushConfig.size, brushConfig.mult / 100, brushConfig.curve);
-        }
-        
-        // We get a reference to the underlying object
-        brushConfig.dirty = false;
-
+        let brush = GetBrush();
         if (brush) {
           if (!right_mouse_button) {
             blobCanvas.apply_brush(mouseX, mouseY, brush);

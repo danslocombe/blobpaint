@@ -2,7 +2,7 @@
 const path = require('path');
 
 module.exports = {
-  entry: "./bootstrap.js",
+  entry: "./js/bootstrap.js",
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "index.js",
