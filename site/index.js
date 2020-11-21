@@ -1,10 +1,9 @@
-import UIMod from "./components/ui.js";
+import { GetBrushConfig } from "./components/ui.js";
+import {BlobCanvas, Brush} from "./node_modules/blobrust/blobrust.js";
 
-const js = import("./node_modules/blobrust/blobrust.js");
-js.then(js => {
   const w = 256;
   const h = 200;
-  var blobCanvas = js.BlobCanvas.new(w, h);
+  var blobCanvas = BlobCanvas.new(w, h);
 
   let canvas = document.getElementById('canvas');
   canvas.oncontextmenu = () => false;
@@ -25,10 +24,10 @@ js.then(js => {
   let mouseY;
 
   // Inv params
-  //let brush = js.Brush.new_inv(50, 0.5, 12);
+  //let brush = Brush.new_inv(50, 0.5, 12);
 
   // Sqrt params
-  //let brush = js.Brush.new_sqrt(50, 8, 0.255);
+  //let brush = Brush.new_sqrt(50, 8, 0.255);
   
   let painting = false;
   let right_mouse_button = false;
@@ -36,6 +35,8 @@ js.then(js => {
   let prev = 0;
   let fps_avg = 60;
   let fps_k = 20;
+  
+  let brush = null;
 
   function tick(timestep) {
     const dt_ms = timestep - prev;
@@ -45,7 +46,14 @@ js.then(js => {
 
     if (painting) {
       if (mouseX > 0 && mouseX < 1 && mouseY > 0 && mouseY < 1 ) {
-        //let brush = UIMod.GetBrush();
+        let brushConfig = GetBrushConfig();
+        if (!brush || brushConfig.dirty) {
+          brush = Brush.new_inv(brushConfig.size, brushConfig.mult / 100, brushConfig.curve);
+        }
+        
+        // We get a reference to the underlying object
+        brushConfig.dirty = false;
+
         if (brush) {
           if (!right_mouse_button) {
             blobCanvas.apply_brush(mouseX, mouseY, brush);
@@ -58,17 +66,6 @@ js.then(js => {
     }
 
     // Draw
-    /*
-    for (let i = 0; i < 2000; i++)
-    {
-      let x = Math.floor(Math.random() * 128);
-      let y = Math.floor(Math.random() * 128);
-      const sampled = blobCanvas.sample_pixel(x, y);
-      ctx.fillStyle = cols[sampled];
-      ctx.fillRect(x, y, 2, 2);
-    }
-    */
-
     for (let y = 0 ; y < h-1; y++) {
       for (let x = 0 ; x < w-1; x++) {
         if (Math.random() < 0.05) {
@@ -113,4 +110,3 @@ js.then(js => {
   });
 
   tick();
-});

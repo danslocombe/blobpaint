@@ -222,17 +222,7 @@ impl Brush {
 
   fn apply_point(&self, dx : f32, dy : f32, p0 : &PointData, remove : bool) -> PointData {
     let dist = (sqr(dx) + sqr(dy)).sqrt();
-    let k = match self.brush_type {
-      BrushType::Inv => {
-        let inv_dist = 1.0 / (1.0 + self.curve * dist);
-        inv_dist / self.mult
-      },
-      BrushType::Sqrt => {
-        (1.0 - self.curve * dist.sqrt()) / self.mult
-      },
-      _ => 0.0,
-    };
-
+    let k = self.sample(dist);
     lerp_x(p0, k, remove)
   }
 }
@@ -245,6 +235,27 @@ impl Brush {
 
   pub fn new_sqrt(size : u32, mult : f32, curve : f32) -> Self {
     Brush { size : size, mult : mult, curve : curve, brush_type : BrushType::Sqrt }
+  }
+  
+  pub fn set_curve(&mut self, curve : f32) {
+    self.curve = curve;
+  }
+  
+  pub fn set_mult(&mut self, mult : f32) {
+    self.mult = mult;
+  }
+  
+  pub fn sample(&self, dist : f32) -> f32 {
+    match self.brush_type {
+      BrushType::Inv => {
+        let inv_dist = 1.0 / (1.0 + self.curve * dist);
+        inv_dist / self.mult
+      },
+      BrushType::Sqrt => {
+        (1.0 - self.curve * dist.sqrt()) / self.mult
+      },
+      _ => 0.0,
+    }
   }
 }
 
