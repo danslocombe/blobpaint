@@ -1,12 +1,12 @@
 {
   "scripts": {
-    "serve": "webpack-dev-server",
+    "serve": "webpack-dev-server --host 0.0.0.0",
     "build": "webpack --mode production"
   },
   "dependencies": {
     "@material-ui/core": "^4.11.0",
     "blobrust": "^0.1.0",
-    "ccapture.js": "^1.1.0",
+    "gif.js": "^0.2.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },

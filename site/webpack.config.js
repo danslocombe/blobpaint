@@ -2,10 +2,13 @@
 const path = require('path');
 
 module.exports = {
-  entry: "./js/bootstrap.js",
+  entry: {
+    "gif.worker": "./node_modules/gif.js/dist/gif.worker.js",
+    index: "./js/bootstrap.js",
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "index.js",
+    filename: '[name].js',
   },
   mode: "development",
   module: {
