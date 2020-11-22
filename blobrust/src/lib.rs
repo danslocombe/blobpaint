@@ -44,21 +44,6 @@ fn sqr(x : f32) -> f32 {
 }
 
 impl PointData {
-  /*
-  fn from_spherical(theta : f32, phi : f32) -> Self {
-    let x = theta.sin() * phi.cos();
-    let y = theta.sin() * phi.sin();
-    let z = theta.cos();
-
-    PointData { x : x, y : y, z : z }
-  }
-
-  fn new() -> Self {
-    let mut rng = rand::thread_rng();
-    PointData::from_spherical(rng.gen_range(0.0, TAU), rng.gen_range(0.0, TAU))
-  }
-  */
-  
   fn new(thresh_band : f32, color_band : f32) -> Self {
     PointData {
       thresh_band: thresh_band,
@@ -72,26 +57,6 @@ impl PointData {
   }
 
   fn sample(&self, thresh : f32, thresh_band : f32) -> Color {
-    /*
-    let mut rng = rand::thread_rng();
-    let seed = rng.gen_range(0.0, 1.0);
-
-    // Unit vector so we know these sum to 1
-    let p_x = sqr(self.x);
-    let p_y = sqr(self.y);
-    let p_z = sqr(self.z);
-
-    if seed < p_x {
-      Color::X
-    }
-    else if seed < p_x + p_y {
-      Color::Y
-    }
-    else {
-      Color::Z
-    }
-    */
-
     if ((self.thresh_band - thresh).abs() < thresh_band) {
       return Color::THRESH;
     }
@@ -133,7 +98,6 @@ impl BlobCanvas {
     let size = width*height;
     let mut data = Vec::with_capacity(size as usize);
     for i in 0..size {
-      //data.push(PointData::from_spherical(i as f32 / 1000.0, i as f32 * 0.001235))
       data.push(PointData::new(0.0, 0.0));
     }
 
@@ -171,7 +135,7 @@ impl BlobCanvas {
     false
   }
 
-  pub fn mutate_brush(&mut self, x_norm : f32, y_norm : f32, brush : &Brush, remove : bool) {
+  pub fn mutate_paintbrush(&mut self, x_norm : f32, y_norm : f32, brush : &Paintbrush, remove : bool) {
     let px = (x_norm * (self.width as f32)).floor() as i32;
     let py = (y_norm * (self.height as f32)).floor() as i32;
 
@@ -184,11 +148,43 @@ impl BlobCanvas {
     for y in y_min..y_max {
       for x in x_min..x_max {
         let i = self.get_index(x as u32, y as u32);
-        let existing = self.data[i];
-        let new = brush.apply_point((px - x) as f32, (py - y) as f32, &self.data[i], remove);
-        self.data[i] = new;
-        //self.data[i] = PointData::from_spherical(0.0, 0.0);
+        brush.apply_point_mut((px - x) as f32, (py - y) as f32, &mut self.data[i], remove);
       }
+    }
+  }
+  
+  pub fn mutate_outliner(&mut self, x_norm : f32, y_norm : f32, remove : bool) {
+    let size = 8;
+    let px = (x_norm * (self.width as f32)).floor() as i32;
+    let py = (y_norm * (self.height as f32)).floor() as i32;
+
+    let rad = (size / 2) as i32;
+    let x_min = (px - rad).max(0);
+    let x_max = (px + rad).min(self.width as i32);
+    let y_min = (py - rad).max(0);
+    let y_max = (py + rad).min(self.height as i32);
+
+    for y in y_min..y_max {
+      for x in x_min..x_max {
+        let i = self.get_index(x as u32, y as u32);
+        let dist = (sqr(px as f32 - x as f32) + sqr(py as f32 - y as f32)).sqrt();
+        if (dist < 5.0)  {
+          let existing = self.data[i];
+          self.data[i].thresh_band = 0.40;
+        }
+      }
+    }
+  }
+  
+  pub fn mutate_brush(&mut self, x_norm : f32, y_norm : f32, brush : &Brush, remove : bool) {
+    match brush.brush_type {
+      BrushType::Inv => {
+        self.mutate_paintbrush(x_norm, y_norm, brush.paintbrush.as_ref().unwrap(), remove)
+      },
+      BrushType::Outliner => {
+        self.mutate_outliner(x_norm, y_norm, remove)
+      }
+      _ => {},
     }
   }
 
@@ -201,71 +197,139 @@ impl BlobCanvas {
   }
 }
 
-fn lerp_brush(p0 : &PointData, k : f32, target_color: f32, remove : bool) -> PointData {
-  // TODO update color
-  let (thresh_new, color_new) = if !remove {
-    ((p0.thresh_band * (1.0 - k) + k).max(p0.thresh_band), p0.color_band * (1.0 - k) + target_color * k)
+fn clamp(x : f32, min : f32, max : f32) -> f32 {
+  if x < min {
+    min
+  }
+  else if x > max {
+    max
   }
   else {
-    (p0.thresh_band * (1.0 - k), p0.color_band)
-  };
+    x
+  }
+}
 
-  PointData::new(thresh_new, color_new)
+fn clamp_unit(x : f32) -> f32 {
+  clamp(x, 0.0, 1.0)
+}
+
+fn lerp_brush_thresh(thresh0 : f32, k : f32, remove : bool) -> f32 {
+  clamp_unit(if !remove {
+    (thresh0 * (1.0 - k) + k).max(thresh0)
+  }
+  else {
+    thresh0 * (1.0 - k)
+  })
+}
+
+fn lerp_brush_color(color0 : f32, k : f32, target_color: f32, remove : bool) -> f32 {
+  clamp_unit(if !remove {
+    color0 * (1.0 - k) + target_color * k
+  }
+  else {
+    color0
+  })
 }
 
 #[wasm_bindgen]
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub enum BrushType {
   Inv,
   Sqrt,
+  Outliner,
+}
+
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub struct Paintbrush {
+  size: u32,
+  mult: f32,
+  curve: f32,
+  color: f32,
+}
+
+impl Paintbrush {
+  fn get_size(&self) -> u32 {
+    self.size
+  }
+
+  fn apply_point_mut(&self, dx : f32, dy : f32, p : &mut PointData, remove : bool) {
+    let dist = (sqr(dx) + sqr(dy)).sqrt();
+    let k = self.sample(dist);
+    p.thresh_band = lerp_brush_thresh(p.thresh_band, k, remove);
+    p.color_band = lerp_brush_color(p.color_band, 4.0*k, self.color, remove);
+  }
+
+  fn sample(&self, dist : f32) -> f32 {
+    let inv_dist = 1.0 / (1.0 + self.curve * dist);
+    inv_dist / self.mult
+  }
+}
+
+#[wasm_bindgen]
+#[derive(Clone, Debug)]
+pub struct Outliner {
+  size: u32,
 }
 
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct Brush {
-  size: u32,
-  mult: f32,
-  curve: f32,
-  color: f32,
   brush_type: BrushType,
-}
-
-impl Brush {
-  fn get_size(&self) -> u32 {
-    self.size
-  }
-
-  fn apply_point(&self, dx : f32, dy : f32, p0 : &PointData, remove : bool) -> PointData {
-    let dist = (sqr(dx) + sqr(dy)).sqrt();
-    let k = self.sample(dist);
-    lerp_brush(p0, k, self.color, remove)
-  }
+  paintbrush : Option<Paintbrush>,
 }
 
 #[wasm_bindgen]
 impl Brush {
   pub fn new_inv(size : u32, mult : f32, curve : f32) -> Self {
-    Brush { size : size, mult : mult, curve : curve, brush_type : BrushType::Inv, color : 0.0 }
+    Brush {
+      brush_type: BrushType::Inv,
+      paintbrush: Some(Paintbrush {
+        size: size,
+        mult: mult,
+        curve: curve,
+        color: 0.0,
+      }),
+    }
   }
-
-  pub fn new_sqrt(size : u32, mult : f32, curve : f32) -> Self {
-    Brush { size : size, mult : mult, curve : curve, brush_type : BrushType::Sqrt, color : 0.0 }
+  
+  pub fn new_outliner() -> Self {
+    Brush {
+      brush_type: BrushType::Outliner,
+      paintbrush: None,
+    }
   }
   
   pub fn set_curve(&mut self, curve : f32) {
-    self.curve = curve;
+    match self.brush_type {
+      BrushType::Inv => {self.paintbrush.as_mut().unwrap().curve = curve},
+      _ => {},
+    }
   }
   
   pub fn set_mult(&mut self, mult : f32) {
-    self.mult = mult;
+    match self.brush_type {
+      BrushType::Inv => {self.paintbrush.as_mut().unwrap().mult = mult},
+      _ => {},
+    }
   }
   
   pub fn set_color(&mut self, color: f32) {
-    self.color = color;
+    match self.brush_type {
+      BrushType::Inv => {self.paintbrush.as_mut().unwrap().color = color},
+      _ => {},
+    }
   }
   
   pub fn sample(&self, dist : f32) -> f32 {
+    // Just inv atm
+    match self.brush_type {
+      BrushType::Inv => {
+        self.paintbrush.as_ref().unwrap().sample(dist)
+      }
+      _ => {0.0}
+    }
+    /*
     match self.brush_type {
       BrushType::Inv => {
         let inv_dist = 1.0 / (1.0 + self.curve * dist);
@@ -276,6 +340,7 @@ impl Brush {
       },
       _ => 0.0,
     }
+    */
   }
 }
 

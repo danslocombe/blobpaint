@@ -1,6 +1,16 @@
 import { Brush } from "../../node_modules/blobrust/blobrust.js"
 
-let brush = Brush.new_inv(50, 4, 5);
+let brushPaintbrush = Brush.new_inv(50, 4, 5);
+let brushOutliner = Brush.new_outliner();
+let brush = brushPaintbrush;
+
+export function ResetPaintbrush() {
+    brush = brushPaintbrush;
+}
+
+export function ResetOutliner() {
+    brush = brushOutliner;
+}
 
 export function SetCurve(x) {
     brush.set_curve(x);

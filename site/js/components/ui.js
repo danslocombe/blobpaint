@@ -16,7 +16,7 @@ import Tab from '@material-ui/core/Tab';
 
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
-import { SetCurve, SetMult, SetColor, RenderBrushGraph } from './brush.js';
+import { SetCurve, SetMult, SetColor, RenderBrushGraph, ResetOutliner, ResetPaintbrush } from './brush.js';
 
 const theme = createMuiTheme({
   overrides: {
@@ -69,12 +69,18 @@ function renderBrushConfig() {
   RenderBrushGraph(canvas);
 }
 
-//setTimeout(renderBrushConfig, 10);
+setTimeout(renderBrushConfig, 10);
 
 function BrushTabs() {
   const [value, setValue] = React.useState(0);
   
   const handleChange = (event, newValue) => {
+    if (newValue === 0) {
+      ResetPaintbrush();
+    }
+    else {
+      ResetOutliner();
+    }
     setValue(newValue);
   };
 
