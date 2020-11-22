@@ -35,9 +35,8 @@ pub enum Color {
 #[wasm_bindgen]
 #[derive(Clone, Copy, Debug)]
 pub struct PointData {
-  x : f32,
-  y : f32,
-  z : f32,
+  thresh_band : f32,
+  color_band : f32,
 }
 
 fn sqr(x : f32) -> f32 {
@@ -45,6 +44,7 @@ fn sqr(x : f32) -> f32 {
 }
 
 impl PointData {
+  /*
   fn from_spherical(theta : f32, phi : f32) -> Self {
     let x = theta.sin() * phi.cos();
     let y = theta.sin() * phi.sin();
@@ -56,6 +56,19 @@ impl PointData {
   fn new() -> Self {
     let mut rng = rand::thread_rng();
     PointData::from_spherical(rng.gen_range(0.0, TAU), rng.gen_range(0.0, TAU))
+  }
+  */
+  
+  fn new(thresh_band : f32, color_band : f32) -> Self {
+    PointData {
+      thresh_band: thresh_band,
+      color_band: color_band,
+    }
+  }
+  
+  fn new_rand() -> Self {
+    let mut rng = rand::thread_rng();
+    Self::new(0.0, rng.gen_range(0.0, 1.0))
   }
 
   fn sample(&self, thresh : f32, thresh_band : f32) -> Color {
@@ -79,12 +92,20 @@ impl PointData {
     }
     */
 
-    if ((self.x - thresh).abs() < thresh_band) {
+    if ((self.thresh_band - thresh).abs() < thresh_band) {
       return Color::THRESH;
     }
 
-    if self.x > thresh {
-      Color::X
+    if self.thresh_band > thresh {
+      // Decide on y or x
+      let mut rng = rand::thread_rng();
+      let seed = rng.gen_range(0.0, 1.0);
+      if self.color_band < seed {
+        Color::X
+      }
+      else {
+        Color::Y
+      }
     }
     else {
       Color::Z
@@ -113,7 +134,7 @@ impl BlobCanvas {
     let mut data = Vec::with_capacity(size as usize);
     for i in 0..size {
       //data.push(PointData::from_spherical(i as f32 / 1000.0, i as f32 * 0.001235))
-      data.push(PointData::from_spherical(0.0, 0.0));
+      data.push(PointData::new(0.0, 0.0));
     }
 
     BlobCanvas {
@@ -180,22 +201,16 @@ impl BlobCanvas {
   }
 }
 
-fn lerp_x(p0 : &PointData, k : f32, remove : bool) -> PointData {
-    let xnew = if !remove {
-      (p0.x * (1.0 - k) + k).max(p0.x)
-    }
-    else {
-      p0.x * (1.0 - k)
-    };
+fn lerp_brush(p0 : &PointData, k : f32, target_color: f32, remove : bool) -> PointData {
+  // TODO update color
+  let (thresh_new, color_new) = if !remove {
+    ((p0.thresh_band * (1.0 - k) + k).max(p0.thresh_band), p0.color_band * (1.0 - k) + target_color * k)
+  }
+  else {
+    (p0.thresh_band * (1.0 - k), p0.color_band)
+  };
 
-    let ynew = p0.y * (1.0 - k);
-    let znew = p0.z * (1.0 - k);
-
-    PointData {
-      x : xnew,
-      y : ynew,
-      z : znew,
-    }
+  PointData::new(thresh_new, color_new)
 }
 
 #[wasm_bindgen]
@@ -212,6 +227,7 @@ pub struct Brush {
   size: u32,
   mult: f32,
   curve: f32,
+  color: f32,
   brush_type: BrushType,
 }
 
@@ -223,18 +239,18 @@ impl Brush {
   fn apply_point(&self, dx : f32, dy : f32, p0 : &PointData, remove : bool) -> PointData {
     let dist = (sqr(dx) + sqr(dy)).sqrt();
     let k = self.sample(dist);
-    lerp_x(p0, k, remove)
+    lerp_brush(p0, k, self.color, remove)
   }
 }
 
 #[wasm_bindgen]
 impl Brush {
   pub fn new_inv(size : u32, mult : f32, curve : f32) -> Self {
-    Brush { size : size, mult : mult, curve : curve, brush_type : BrushType::Inv }
+    Brush { size : size, mult : mult, curve : curve, brush_type : BrushType::Inv, color : 0.0 }
   }
 
   pub fn new_sqrt(size : u32, mult : f32, curve : f32) -> Self {
-    Brush { size : size, mult : mult, curve : curve, brush_type : BrushType::Sqrt }
+    Brush { size : size, mult : mult, curve : curve, brush_type : BrushType::Sqrt, color : 0.0 }
   }
   
   pub fn set_curve(&mut self, curve : f32) {
@@ -243,6 +259,10 @@ impl Brush {
   
   pub fn set_mult(&mut self, mult : f32) {
     self.mult = mult;
+  }
+  
+  pub fn set_color(&mut self, color: f32) {
+    self.color = color;
   }
   
   pub fn sample(&self, dist : f32) -> f32 {

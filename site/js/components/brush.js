@@ -10,12 +10,16 @@ export function SetMult(x) {
     brush.set_mult(x);
 }
 
+export function SetColor(x) {
+    brush.set_color(x);
+}
+
 export function GetBrush() {
     return brush;
 }
 
 export function RenderBrushGraph(canvas) {
-  let ctx = canvas.getContext('2d', { alpha: false });
+  let ctx = canvas.getContext('2d');
   //ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "#882222"
