@@ -7,9 +7,12 @@ use wasm_bindgen::prelude::*;
 use rand::prelude::*;
 
 use std::f32::consts::TAU;
+use std::collections::VecDeque;
 
 use utils::{sqr};
 use brush::{Brush, BrushType};
+
+const MAX_UNDOS : usize = 8;
 
 #[wasm_bindgen]
 extern {
@@ -80,7 +83,7 @@ pub struct BlobCanvas {
   width : u32,
   height : u32,
   data : Vec<PointData>,
-  undo_stack : Vec<Vec<PointData>>,
+  undo_stack : VecDeque<Vec<PointData>>,
   t : u32,
 }
 
@@ -145,7 +148,7 @@ impl BlobCanvas {
       width : width,
       height : height,
       data : data,
-      undo_stack : Vec::new(),
+      undo_stack : VecDeque::with_capacity(MAX_UNDOS+1),
       t : 0,
     }
   }
@@ -168,17 +171,16 @@ impl BlobCanvas {
   }
 
   pub fn push_undo(&mut self) {
-    const MAX_UNDOS : usize = 8;
 
-    self.undo_stack.push(self.data.clone());
+    self.undo_stack.push_back(self.data.clone());
 
     while self.undo_stack.len() > MAX_UNDOS {
-      let _ = self.undo_stack.pop();
+      let _ = self.undo_stack.pop_front();
     }
   }
 
   pub fn try_pop_undo(&mut self) -> bool {
-    match self.undo_stack.pop() {
+    match self.undo_stack.pop_back() {
       Some(data) => {
         self.data = data;
         true
