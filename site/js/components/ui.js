@@ -21,8 +21,7 @@ import Tab from '@material-ui/core/Tab';
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
 import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush } from './brush.js';
-import {StartCapture, ResetCapture} from "./tick.js";
-import { red } from '@material-ui/core/colors';
+import {StartCapture, ResetCapture} from "./paint.js";
 
 const theme = createMuiTheme({
   overrides: {

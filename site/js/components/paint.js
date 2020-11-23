@@ -1,5 +1,5 @@
 import { GetBrush } from "./brush.js";
-import {BlobCanvas, Brush} from "../../node_modules/blobrust/blobrust.js";
+import {BlobCanvas, Brush} from "blobrust";
 import GIF from 'gif.js';
 
 const w = 256;
@@ -51,9 +51,6 @@ export function StartCapture(progressCallback, resetCallback, downloadLinkCallba
     gifconfig.blob = blob;
     console.log("Finished rendering - " + blob.size);
     let url = URL.createObjectURL(blob);
-    //console.log(url);
-    //window.open(url);
-    //window.location.href = url;
     gifconfig.gif = null;
     gifconfig.rendering = false;
     progressCallback("View Capture");
@@ -76,7 +73,7 @@ export function ResetCapture() {
 
 function updateGif() {
   if (gifconfig.gif) {
-      if (gifconfig.gif.frames.length > 4) {
+      if (gifconfig.gif.frames.length > 30*3) {
           if (!gifconfig.rendering) {
               gifconfig.gif.render();
               gifconfig.rendering = true;
