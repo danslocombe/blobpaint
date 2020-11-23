@@ -15,7 +15,7 @@ import Tab from '@material-ui/core/Tab';
 
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
-import { SetCurve, SetMult, SetColor, RenderBrushGraph, ResetOutliner, ResetPaintbrush } from './brush.js';
+import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush } from './brush.js';
 import {StartCapture, ResetCapture} from "./tick.js";
 
 const theme = createMuiTheme({
@@ -118,13 +118,13 @@ function PaintBrush(props) {
         <Typography variant="h3">Brush</Typography>
         <Typography>Curve</Typography>
         <Slider
-            defaultValue={20}
+            defaultValue={200}
             //getAriaValueText={valuetext}
             aria-labelledby="continuous-slider"
             valueLabelDisplay="auto"
-            onChange={ (e, val) => {SetCurve(val); renderBrushConfig()}}
-            min={1}
-            max={40}
+            onChange={ (e, val) => {GetBrush().set_curve(val / 10); renderBrushConfig()}}
+            min={0}
+            max={400}
         />
         <Typography>Strength</Typography>
         <Slider
@@ -132,7 +132,7 @@ function PaintBrush(props) {
             //getAriaValueText={valuetext}
             aria-labelledby="continuous-slider"
             valueLabelDisplay="auto"
-            onChange={ (e, val) => {SetMult(val / 100); renderBrushConfig()}}
+            onChange={ (e, val) => {GetBrush().set_mult(val / 100); renderBrushConfig()}}
             min={1}
             max={250}
         />
@@ -141,7 +141,7 @@ function PaintBrush(props) {
         <FormControl component="fieldset">
         <FormLabel component="legend" color={color}>Colour</FormLabel>
         <RadioGroup row aria-label="position" name="position" defaultValue={color} onChange={(e, val) => {
-            SetColor(val == "primary" ? 0.0 : 1.0);
+            GetBrush().set_color(val == "primary" ? 0.0 : 1.0);
             setColorReactState(val);
           }
         }>

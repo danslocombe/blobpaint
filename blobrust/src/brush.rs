@@ -29,8 +29,7 @@ impl Paintbrush {
   }
 
   pub fn sample(&self, dist : f32) -> f32 {
-    let inv_dist = 1.0 / (1.0 + self.curve * dist);
-    inv_dist / self.mult
+    self.mult / (1.0 + self.curve * dist)
   }
 }
 

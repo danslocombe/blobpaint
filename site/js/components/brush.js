@@ -12,18 +12,6 @@ export function ResetOutliner() {
     brush = brushOutliner;
 }
 
-export function SetCurve(x) {
-    brush.set_curve(x);
-}
-
-export function SetMult(x) {
-    brush.set_mult(x);
-}
-
-export function SetColor(x) {
-    brush.set_color(x);
-}
-
 export function GetBrush() {
     return brush;
 }

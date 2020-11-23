@@ -153,3 +153,9 @@ window.addEventListener('mouseup', event => {
     event.preventDefault();
     painting = false;
 });
+
+window.addEventListener('keydown', event => {
+  if ((event.code === "KeyZ" || event.keyCode === 90) && event.ctrlKey) {
+    let _success = blobCanvas.try_pop_undo();
+  }
+});

@@ -80,6 +80,7 @@ pub struct BlobCanvas {
   width : u32,
   height : u32,
   data : Vec<PointData>,
+  undo_stack : Vec<Vec<PointData>>,
   t : u32,
 }
 
@@ -144,6 +145,7 @@ impl BlobCanvas {
       width : width,
       height : height,
       data : data,
+      undo_stack : Vec::new(),
       t : 0,
     }
   }
@@ -166,12 +168,23 @@ impl BlobCanvas {
   }
 
   pub fn push_undo(&mut self) {
-    // TODO
+    const MAX_UNDOS : usize = 8;
+
+    self.undo_stack.push(self.data.clone());
+
+    while self.undo_stack.len() > MAX_UNDOS {
+      let _ = self.undo_stack.pop();
+    }
   }
 
   pub fn try_pop_undo(&mut self) -> bool {
-    // TODO
-    false
+    match self.undo_stack.pop() {
+      Some(data) => {
+        self.data = data;
+        true
+      },
+      _ => false,
+    }
   }
 
   pub fn apply_brush(&mut self, x_norm : f32, y_norm : f32, brush : &Brush) {
