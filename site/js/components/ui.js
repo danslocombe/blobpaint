@@ -8,6 +8,11 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
 import Typography from '@material-ui/core/Typography';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Checkbox from '@material-ui/core/Checkbox';
 
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
@@ -17,10 +22,21 @@ import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/sty
 
 import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush } from './brush.js';
 import {StartCapture, ResetCapture} from "./tick.js";
+import { red } from '@material-ui/core/colors';
 
 const theme = createMuiTheme({
   overrides: {
   },
+  /*
+  palette: {
+    primary: {
+      main: "#FFFF88",
+    },
+    secondary: {
+      main: "#FFAA88",
+    }
+  }
+  */
 });
 
 theme.typography.h3 = {
@@ -80,12 +96,6 @@ function BrushTabs() {
   const [value, setValue] = React.useState(0);
   
   const handleChange = (event, newValue) => {
-    if (newValue === 0) {
-      ResetPaintbrush();
-    }
-    else {
-      ResetOutliner();
-    }
     setValue(newValue);
   };
 
@@ -98,7 +108,7 @@ function BrushTabs() {
       onChange={handleChange}
       aria-label="tabs"
     >
-      <Tab label="Create" />
+      <Tab label="Draw" />
       <Tab label="Export" />
     </Tabs>
       <PaintBrush value={value} index={0}/>
@@ -112,53 +122,102 @@ function PaintBrush(props) {
     const index = props.index;
     const classes = useStyles();
     const [color, setColorReactState] = React.useState("primary");
+    const [tool, setToolState] = React.useState("paintbrush");
+    let setTool = (tool) =>  {
+      setToolState(tool);
+      if (tool === "paintbrush") {
+        ResetPaintbrush();
+      }
+      else if (tool === "outliner"){
+        ResetOutliner();
+      }
+    }
     
     return (
         <div className={classes.root} hidden={value !== index}>
-        <Typography variant="h3">Brush</Typography>
-        <Typography>Curve</Typography>
-        <Slider
-            defaultValue={200}
-            //getAriaValueText={valuetext}
-            aria-labelledby="continuous-slider"
-            valueLabelDisplay="auto"
-            onChange={ (e, val) => {GetBrush().set_curve(val / 10); renderBrushConfig()}}
-            min={0}
-            max={400}
-        />
-        <Typography>Strength</Typography>
-        <Slider
-            defaultValue={100}
-            //getAriaValueText={valuetext}
-            aria-labelledby="continuous-slider"
-            valueLabelDisplay="auto"
-            onChange={ (e, val) => {GetBrush().set_mult(val / 100); renderBrushConfig()}}
-            min={1}
-            max={250}
-        />
-        <canvas id="brushcurve">
-        </canvas>
-        <FormControl component="fieldset">
-        <FormLabel component="legend" color={color}>Colour</FormLabel>
-        <RadioGroup row aria-label="position" name="position" defaultValue={color} onChange={(e, val) => {
-            GetBrush().set_color(val == "primary" ? 0.0 : 1.0);
-            setColorReactState(val);
-          }
-        }>
+        <RadioGroup aria-label="gender" name="gender1" value={tool} onChange={setTool}>
+        <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
           <FormControlLabel
-            value="primary"
-            control={<Radio color="primary" />}
-            label="Primary"
-            labelplacement="start"
+            value="paintbrush"
+            aria-label="Paintbrush"
+            onClick={(event) => {event.stopPropagation(); setTool("paintbrush")}}
+            onFocus={(event) => {event.stopPropagation(); setTool("paintbrush")}}
+            control={<Radio />}
+            label="Paintbrush"
           />
+        </AccordionSummary>
+        <AccordionDetails>
+          <div>
+          <Typography>Curve</Typography>
+          <Slider
+              defaultValue={200}
+              //getAriaValueText={valuetext}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {GetBrush().set_curve(val / 10); renderBrushConfig()}}
+              min={0}
+              max={400}
+          />
+          <Typography>Strength</Typography>
+          <Slider
+              defaultValue={100}
+              //getAriaValueText={valuetext}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {GetBrush().set_mult(val / 100); renderBrushConfig()}}
+              min={1}
+              max={250}
+          />
+          <canvas id="brushcurve">
+          </canvas>
+          <FormControl component="fieldset">
+          <FormLabel component="legend" color={color}>Colour</FormLabel>
+          <RadioGroup row aria-label="position" name="position" defaultValue={color} onChange={(e, val) => {
+              GetBrush().set_color(val == "primary" ? 0.0 : 1.0);
+              setColorReactState(val);
+            }
+          }>
+            <FormControlLabel
+              value="primary"
+              control={<Radio color="primary" />}
+              label="Primary"
+              labelplacement="start"
+            />
+            <FormControlLabel
+              value="secondary"
+              control={<Radio color="secondary" />}
+              label="Secondary"
+              labelplacement="start"
+            />
+          </RadioGroup>
+          </FormControl>
+          </div>
+        </AccordionDetails>
+        </Accordion>
+        <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
           <FormControlLabel
-            value="secondary"
-            control={<Radio color="secondary" />}
-            label="Secondary"
-            labelplacement="start"
+            value="outliner"
+            aria-label="Outliner"
+            onClick={(event) => {event.stopPropagation(); setTool("outliner")}}
+            onFocus={(event) => {event.stopPropagation(); setTool("outliner")}}
+            control={<Radio />}
+            label="Outliner"
           />
+        </AccordionSummary>
+        <AccordionDetails>
+        </AccordionDetails>
+        </Accordion>
         </RadioGroup>
-      </FormControl>
         </div>
     );
 }

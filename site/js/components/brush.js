@@ -20,8 +20,9 @@ export function RenderBrushGraph(canvas) {
   let ctx = canvas.getContext('2d');
   //ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#882222"
-  ctx.lineWidth = 3;
+  ctx.fillStyle = "#882222";
+  ctx.strokeStyle = "#363636";
+  ctx.lineWidth = 2;
   let yprev = undefined;
   const step = 5;
   for (let x = 0; x < canvas.width; x+=step) {
