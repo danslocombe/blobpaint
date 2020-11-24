@@ -42,6 +42,7 @@ let gifconfig = {
 export function StartCapture(progressCallback, resetCallback, downloadLinkCallback) {
   gifconfig.gif = new GIF({
     workers: 4,
+    globalPalette: [0xFF, 0xFF, 0x88, 0xFF, 0xAA, 0x88, 0xAA, 0x88, 0x44, 0x00, 0x00, 0x00],
     quality: 10,
   });
     
