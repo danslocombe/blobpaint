@@ -20,7 +20,7 @@ import Tab from '@material-ui/core/Tab';
 
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
-import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush } from './brush.js';
+import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger } from './brush.js';
 import {StartCapture, ResetCapture} from "./paint.js";
 
 const theme = createMuiTheme({
@@ -130,6 +130,9 @@ function PaintBrush(props) {
       else if (tool === "outliner"){
         ResetOutliner();
       }
+      else if (tool === "smudger"){
+        ResetSmudger();
+      }
     }
     
     return (
@@ -211,6 +214,24 @@ function PaintBrush(props) {
             onFocus={(event) => {event.stopPropagation(); setTool("outliner")}}
             control={<Radio />}
             label="Outliner"
+          />
+        </AccordionSummary>
+        <AccordionDetails>
+        </AccordionDetails>
+        </Accordion>
+        <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          <FormControlLabel
+            value="smudger"
+            aria-label="Smudger"
+            onClick={(event) => {event.stopPropagation(); setTool("smudger")}}
+            onFocus={(event) => {event.stopPropagation(); setTool("smudger")}}
+            control={<Radio />}
+            label="Smudger"
           />
         </AccordionSummary>
         <AccordionDetails>

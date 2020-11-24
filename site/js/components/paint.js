@@ -86,11 +86,8 @@ function updateGif() {
 }
 
 export function Tick(timestep) {
-    t+=1;
     const dt_ms = timestep - prev;
     prev = timestep;
-
-    blobCanvas.incr_t();
 
     if (painting) {
       if (mouseX > 0 && mouseX < 1 && mouseY > 0 && mouseY < 1 ) {
@@ -105,6 +102,9 @@ export function Tick(timestep) {
         }
       }
     }
+
+    t+=1;
+    blobCanvas.tick();
 
     // Draw
     for (let y = 0 ; y < h-1; y++) {

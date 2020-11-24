@@ -1,6 +1,7 @@
 extern crate rand;
 
 mod utils;
+mod data_doublebuffer;
 mod brush;
 
 use wasm_bindgen::prelude::*;
@@ -10,7 +11,8 @@ use std::f32::consts::TAU;
 use std::collections::VecDeque;
 
 use utils::{sqr};
-use brush::{Brush, BrushType};
+use data_doublebuffer::DataDoubleBuffer;
+use brush::{Brush, BrushT, BrushType};
 
 const MAX_UNDOS : usize = 8;
 
@@ -82,19 +84,51 @@ impl PointData {
 pub struct BlobCanvas {
   width : u32,
   height : u32,
-  data : Vec<PointData>,
+  data : DataDoubleBuffer<PointData>,
   undo_stack : VecDeque<Vec<PointData>>,
   t : u32,
+}
+
+pub struct CanvasApi<'t> {
+  x : u32,
+  y : u32,
+  canvas : &'t mut BlobCanvas,
+}
+
+impl<'t> CanvasApi<'t>{
+  pub fn get_mut(&mut self) -> &mut PointData {
+    let i = self.canvas.get_index(self.x, self.y);
+    &mut self.canvas.data.get_mut()[i]
+  }
+
+  pub fn try_get_offset(&self, xoff : i32, yoff: i32) -> Option<PointData> {
+    let x = self.x as i32 + xoff;
+    let y = self.y as i32 + yoff;
+    self.canvas.try_get_index(x, y)
+      .map(|i| self.canvas.data.get_imm()[i])
+  }
 }
 
 impl BlobCanvas {
   fn get_index(&self, x: u32, y: u32) -> usize {
     (y * self.width + x) as usize
   }
+
+  fn try_get_index(&self, x: i32, y: i32) -> Option<usize> {
+    if x < 0 || x >= self.width as i32 || y < 0 || y >= self.height as i32 {
+      None
+    }
+    else {
+      Some((y as u32 * self.width + x as u32) as usize)
+    }
+  }
 }
 
 impl BlobCanvas {
-  pub fn map_over_pointdata(&mut self, x_norm : f32, y_norm : f32, rad : i32, f : &dyn Fn(f32, f32, &mut PointData)) {
+  pub fn mutate_brush(& mut self, x_norm : f32, y_norm : f32, brush : &Brush, remove : bool) {
+
+    let rad = 8;
+
     let px = (x_norm * (self.width as f32)).floor() as i32;
     let py = (y_norm * (self.height as f32)).floor() as i32;
 
@@ -105,32 +139,32 @@ impl BlobCanvas {
 
     for y in y_min..y_max {
       for x in x_min..x_max {
-        let i = self.get_index(x as u32, y as u32);
-        f((px - x) as f32, (py - y) as f32, &mut self.data[i]);
-      }
-    }
-  }
-  
-  pub fn mutate_brush(&mut self, x_norm : f32, y_norm : f32, brush : &Brush, remove : bool) {
-    match brush.brush_type {
-      BrushType::Inv => {
-        let paintbrush = brush.paintbrush.as_ref().unwrap();
-        let brush_apply = |dx, dy, point_data: &mut PointData| {
-          paintbrush.apply_point_mut(dx, dy, point_data, remove)
+        let mut api = CanvasApi {
+          x : x as u32,
+          y : y as u32,
+          canvas: self,
         };
-        self.map_over_pointdata(x_norm, y_norm, paintbrush.size as i32 / 2, &brush_apply);
-      },
-      BrushType::Outliner => {
-        let brush_apply = |dx, dy, point_data: &mut PointData| {
-          let dist = (sqr(dx) + sqr(dy)).sqrt();
-          if dist < 5.0  {
-            point_data.thresh_band = 0.40;
-          }
-        };
+        let (dx, dy) = ((px - x) as f32, (py - y) as f32);
 
-        self.map_over_pointdata(x_norm, y_norm, 4, &brush_apply);
+        match brush.brush_type {
+          BrushType::Inv => {
+            let paintbrush = brush.paintbrush.as_ref().unwrap();
+            paintbrush.apply_point_mut(dx, dy, api.get_mut(), remove);
+          },
+          BrushType::Outliner => {
+            let dist = (sqr(dx) + sqr(dy)).sqrt();
+            if dist < 5.0  {
+              let point_data = api.get_mut();
+              point_data.thresh_band = 0.40;
+            }
+          },
+          BrushType::Smudger => {
+            let smudge = brush.smudger.as_ref().unwrap();
+            smudge.apply_smudge(dx, dy, api);
+          }
+          _ => {},
+        }
       }
-      _ => {},
     }
   }
 }
@@ -147,14 +181,15 @@ impl BlobCanvas {
     BlobCanvas {
       width : width,
       height : height,
-      data : data,
+      data : DataDoubleBuffer::new(data),
       undo_stack : VecDeque::with_capacity(MAX_UNDOS+1),
       t : 0,
     }
   }
 
-  pub fn incr_t(&mut self) {
+  pub fn tick(&mut self) {
     self.t += 1;
+    self.data.incr();
   }
 
   pub fn sample_pixel(&self, x : u32, y : u32) -> Color {
@@ -167,12 +202,13 @@ impl BlobCanvas {
     let t_y_var = t + TAU * (y as f32) / self.height as f32;
 
     let thresh = THRESH_BASE + THRESH_T_VAR * (t_y_var).sin();
-    self.data[i].sample(thresh, 0.05)
+    let point_data = self.data.get_imm()[i];
+    point_data.sample(thresh, 0.05)
   }
 
   pub fn push_undo(&mut self) {
 
-    self.undo_stack.push_back(self.data.clone());
+    self.undo_stack.push_back(self.data.get_clone());
 
     while self.undo_stack.len() > MAX_UNDOS {
       let _ = self.undo_stack.pop_front();
@@ -182,7 +218,7 @@ impl BlobCanvas {
   pub fn try_pop_undo(&mut self) -> bool {
     match self.undo_stack.pop_back() {
       Some(data) => {
-        self.data = data;
+        self.data = DataDoubleBuffer::new(data);
         true
       },
       _ => false,

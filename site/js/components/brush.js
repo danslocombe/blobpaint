@@ -2,6 +2,7 @@ import { Brush } from "../../node_modules/blobrust/blobrust.js"
 
 let brushPaintbrush = Brush.new_inv(50, 4, 5);
 let brushOutliner = Brush.new_outliner();
+let brushSmudger = Brush.new_smudger();
 let brush = brushPaintbrush;
 
 export function ResetPaintbrush() {
@@ -10,6 +11,10 @@ export function ResetPaintbrush() {
 
 export function ResetOutliner() {
     brush = brushOutliner;
+}
+
+export function ResetSmudger() {
+    brush = brushSmudger;
 }
 
 export function GetBrush() {
