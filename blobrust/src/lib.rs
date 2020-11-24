@@ -84,6 +84,9 @@ impl PointData {
 pub struct BlobCanvas {
   width : u32,
   height : u32,
+  thresh_base : f32,
+  thresh_t_var : f32,
+  thresh_t_mult : f32,
   data : DataDoubleBuffer<PointData>,
   undo_stack : VecDeque<Vec<PointData>>,
   t : u32,
@@ -127,7 +130,7 @@ impl BlobCanvas {
 impl BlobCanvas {
   pub fn mutate_brush(& mut self, x_norm : f32, y_norm : f32, brush : &Brush, remove : bool) {
 
-    let rad = 8;
+    let rad = 25;
 
     let px = (x_norm * (self.width as f32)).floor() as i32;
     let py = (y_norm * (self.height as f32)).floor() as i32;
@@ -181,14 +184,17 @@ impl BlobCanvas {
     BlobCanvas {
       width : width,
       height : height,
+      thresh_base: 0.4,
+      thresh_t_var: 0.095,
+      thresh_t_mult: TAU / 1_000_000.0,
       data : DataDoubleBuffer::new(data),
       undo_stack : VecDeque::with_capacity(MAX_UNDOS+1),
       t : 0,
     }
   }
 
-  pub fn tick(&mut self) {
-    self.t += 1;
+  pub fn tick(&mut self, microseconds: u32) {
+    self.t += microseconds;
     self.data.incr();
   }
 
@@ -196,12 +202,17 @@ impl BlobCanvas {
     let i = self.get_index(x, y);
 
     const THRESH_BASE : f32 = 0.4;
-    const THRESH_T_VAR : f32 = 0.035;
-    const T_MULT : f32 = TAU / 80.0;
-    let t = self.t as f32 * T_MULT;
+    const THRESH_T_VAR : f32 = 0.095;
+    const T_MULT : f32 = TAU / (1_000_000.0);
+
+    //const THRESH_T_VAR : f32 = 0.035;
+    //const T_MULT : f32 = TAU / (60.0 * 80.0);
+    //const T_MULT : f32 = TAU / (80.0 * 60.0 * 1_000_000.0);
+
+    let t = self.t as f32 * self.thresh_t_mult;
     let t_y_var = t + TAU * (y as f32) / self.height as f32;
 
-    let thresh = THRESH_BASE + THRESH_T_VAR * (t_y_var).sin();
+    let thresh = self.thresh_base + self.thresh_t_var * (t_y_var).sin();
     let point_data = self.data.get_imm()[i];
     point_data.sample(thresh, 0.05)
   }
@@ -223,6 +234,18 @@ impl BlobCanvas {
       },
       _ => false,
     }
+  }
+
+  pub fn set_thresh_base(&mut self, val : f32) {
+    self.thresh_base = val;
+  }
+
+  pub fn set_thresh_t_var(&mut self, val : f32) {
+    self.thresh_t_var = val;
+  }
+
+  pub fn set_thresh_t_mult(&mut self, val : f32) {
+    self.thresh_t_mult = val;
   }
 
   pub fn apply_brush(&mut self, x_norm : f32, y_norm : f32, brush : &Brush) {

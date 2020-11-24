@@ -21,6 +21,34 @@ export function GetBrush() {
     return brush;
 }
 
+let mousePrevSmoothX = 0;
+let mousePrevSmoothY = 0;
+let mouseSmoothX = 0;
+let mouseSmoothY = 0;
+const mouseSmoothK = 5;
+
+function lerpk(x0, x1, k) {
+  return (x0 * k + x1) / (k+1);
+}
+
+export function RecordMousePos(x, y) {
+  mouseSmoothX = isNaN(mouseSmoothX) ? x : mouseSmoothX;
+  mouseSmoothY = isNaN(mouseSmoothY) ? y : mouseSmoothY;
+
+  mousePrevSmoothX = mouseSmoothX;
+  mousePrevSmoothY = mouseSmoothY;
+
+  mouseSmoothX = lerpk(mouseSmoothX, x, mouseSmoothK);
+  mouseSmoothY = lerpk(mouseSmoothY, y, mouseSmoothK);
+
+  const dMult = 200;
+  let dx = -dMult * (mouseSmoothX - mousePrevSmoothX);
+  let dy = -dMult * (mouseSmoothY - mousePrevSmoothY);
+
+  brush.set_smudger_dx(dx);
+  brush.set_smudger_dy(dy);
+}
+
 export function RenderBrushGraph(canvas) {
   let ctx = canvas.getContext('2d');
   //ctx.imageSmoothingEnabled = false;

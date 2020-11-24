@@ -21,7 +21,7 @@ import Tab from '@material-ui/core/Tab';
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
 import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger } from './brush.js';
-import {StartCapture, ResetCapture} from "./paint.js";
+import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult} from "./paint.js";
 
 const theme = createMuiTheme({
   overrides: {
@@ -238,6 +238,49 @@ function PaintBrush(props) {
         </AccordionDetails>
         </Accordion>
         </RadioGroup>
+        <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          <Typography>
+            Blobbiness
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <div>
+          <Typography>Thresh base</Typography>
+          <Slider
+              defaultValue={40}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {SetBlobCanvasThreshBase(val / 100)}}
+              min={1}
+              max={100}
+          />
+          <Typography>Thresh variance</Typography>
+          <Slider
+              defaultValue={100}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {SetBlobCanvasThreshTVar(val / 1000)}}
+              min={1}
+              max={120}
+          />
+          <Typography>Thresh time</Typography>
+          <Slider
+              defaultValue={60}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {SetBlobCanvasThreshTMult(val / (10 * 1000 * 1000))}}
+              min={1}
+              max={100}
+          />
+          </div>
+        </AccordionDetails>
+        </Accordion>
+        <ResetUndoUI />
         </div>
     );
 }
@@ -279,6 +322,27 @@ function ExportUI(props) {
         }
       }>
       Reset
+    </Button>
+    </div>
+    </div>
+  );
+}
+
+function ResetUndoUI() {
+  const classes = useStyles();
+  const classSpacing = useStylesSpacing();
+  return (
+    <div className={classes.root}>
+    <div className={classSpacing.root}>
+    <Button key="0" variant="contained" color="primary" onClick={(evt) => {
+    }}>
+      Undo
+    </Button>
+    <Button key="1" variant="contained" color="secondary" onClick={
+        (evt) => {
+        }
+      }>
+      Clear
     </Button>
     </div>
     </div>

@@ -62,33 +62,39 @@ pub struct Smudger {
   smudge_dist_mult : f32,
   mult: f32,
   curve: f32,
-  dx: f32,
-  dy: f32,
+  smudge_vec_x: f32,
+  smudge_vec_y: f32,
   pub size: u32,
 }
 
+fn lerpk(x0: f32, x1: f32, k: f32) -> f32 {
+  (x0 * k + x1) / (k + 1.0)
+}
+
 impl<'t> Smudger {
-  pub fn apply_smudge(&self, _x : f32, _y : f32, mut api : CanvasApi<'t>) {
-    // Todo interpolate
-    let t_dx = (self.dx * self.smudge_dist_mult) as i32;
-    let t_dy = (self.dy * self.smudge_dist_mult) as i32;
-    match api.try_get_offset(t_dx, t_dy) {
-      Some(source_smudge) => {
-        let mut cur = api.get_mut();
-        cur.thresh_band = (source_smudge.thresh_band + cur.thresh_band) / 2.0;
-        cur.color_band = (source_smudge.color_band + cur.color_band) / 2.0;
+  pub fn apply_smudge(&self, offset_x : f32, offset_y : f32, mut api : CanvasApi<'t>) {
+
+    // Want to apply smudge only to points in the direction of the smudge
+    // Strength is dot of offset from the brush centre with the smudge vector
+    let strength = (self.smudge_vec_x * offset_x + self.smudge_vec_y * offset_y).max(0.0);
+
+    if strength > 0.0 {
+      // Todo interpolate
+      let sample_xo = (self.smudge_vec_x * self.smudge_dist_mult) as i32;
+      let sample_yo = (self.smudge_vec_y * self.smudge_dist_mult) as i32;
+
+      match api.try_get_offset(sample_xo, sample_yo) {
+        Some(source_smudge) => {
+          let k = 8.0;
+          let mut cur = api.get_mut();
+          cur.thresh_band = lerpk(cur.thresh_band, source_smudge.thresh_band, k);
+          cur.color_band = lerpk(cur.color_band, source_smudge.color_band, k);
+          //cur.thresh_band = (source_smudge.thresh_band + cur.thresh_band) / 2.0;
+          //cur.color_band = (source_smudge.color_band + cur.color_band) / 2.0;
+        }
+        _ => {},
       }
-      _ => {},
     }
-
-
-
-    //let dist = (sqr(dx) + sqr(dy)).sqrt();
-    //let k = self.sample(dist);
-    /*
-    p.thresh_band = lerp_brush_thresh(p.thresh_band, k, remove);
-    p.color_band = lerp_brush_color(p.color_band, 4.0*k, self.color, remove);
-    */
   }
 }
 
@@ -133,8 +139,8 @@ impl Brush {
     brush.brush_type = BrushType::Smudger;
     brush.smudger = Some(Smudger {
       smudge_dist_mult: 16.0,
-      dx : 1.0,
-      dy : 0.0,
+      smudge_vec_x : 1.0,
+      smudge_vec_y : 0.0,
       curve: 0.0,
       mult: 0.0,
       size: 8,
@@ -160,6 +166,20 @@ impl Brush {
   pub fn set_color(&mut self, color: f32) {
     match self.brush_type {
       BrushType::Inv => {self.paintbrush.as_mut().unwrap().color = color},
+      _ => {},
+    }
+  }
+
+  pub fn set_smudger_dx(&mut self, dx: f32) {
+    match self.brush_type {
+      BrushType::Smudger => {self.smudger.as_mut().unwrap().smudge_vec_x = dx},
+      _ => {},
+    }
+  }
+
+  pub fn set_smudger_dy(&mut self, dy: f32) {
+    match self.brush_type {
+      BrushType::Smudger => {self.smudger.as_mut().unwrap().smudge_vec_y = dy},
       _ => {},
     }
   }

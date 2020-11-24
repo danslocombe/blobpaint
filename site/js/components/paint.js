@@ -1,5 +1,5 @@
-import { GetBrush } from "./brush.js";
-import {BlobCanvas, Brush} from "blobrust";
+import { GetBrush, RecordMousePos } from "./brush.js";
+import {BlobCanvas} from "blobrust";
 import GIF from 'gif.js';
 
 const w = 256;
@@ -43,7 +43,7 @@ export function StartCapture(progressCallback, resetCallback, downloadLinkCallba
   gifconfig.gif = new GIF({
     workers: 4,
     globalPalette: [0xFF, 0xFF, 0x88, 0xFF, 0xAA, 0x88, 0xAA, 0x88, 0x44, 0x00, 0x00, 0x00],
-    quality: 10,
+    quality: 4,
   });
     
   progressCallback("Capturing Frames...")
@@ -74,14 +74,17 @@ export function ResetCapture() {
 
 function updateGif() {
   if (gifconfig.gif) {
-      if (gifconfig.gif.frames.length > 30*3) {
+      //const targetframes = 80 * 2 * (50 / fps_avg);
+      const targetframes = 100;
+      if (gifconfig.gif.frames.length > targetframes) {
           if (!gifconfig.rendering) {
               gifconfig.gif.render();
               gifconfig.rendering = true;
           }
       }
       else {
-          gifconfig.gif.addFrame(canvas, {delay: 1000 / 30, copy: true});
+        const delayMs = 20;
+        gifconfig.gif.addFrame(canvas, {delay: delayMs, copy: true});
       }
   }
 }
@@ -104,8 +107,17 @@ export function Tick(timestep) {
       }
     }
 
+    RecordMousePos(mouseX, mouseY);
+
     t+=1;
-    blobCanvas.tick();
+    let framerate = fps_avg;
+    if (gifconfig.gif != null)
+    {
+      // Record at 50 fps
+      framerate = 50;
+    }
+
+    blobCanvas.tick((1000 * 1000) / framerate);
 
     // Draw
     for (let y = 0 ; y < h-1; y++) {
@@ -126,12 +138,22 @@ export function Tick(timestep) {
       ctx.fillText(Math.floor(fps_avg), 10, 10)
     }
     
-    if (t % 2 == 0)
+    //if (t % 2 == 0)
     {
         updateGif();
     }
 
     window.requestAnimationFrame(Tick);
+}
+
+export function SetBlobCanvasThreshBase(x) {
+  blobCanvas.set_thresh_base(x);
+}
+export function SetBlobCanvasThreshTVar(x) {
+  blobCanvas.set_thresh_t_var(x);
+}
+export function SetBlobCanvasThreshTMult(x) {
+  blobCanvas.set_thresh_t_mult(x);
 }
 
 canvas.addEventListener('mousemove', event => {
