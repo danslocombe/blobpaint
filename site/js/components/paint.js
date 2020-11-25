@@ -1,6 +1,7 @@
 import { GetBrush, RecordMousePos } from "./brush.js";
 import {BlobCanvas} from "blobrust";
 import GIF from 'gif.js';
+import {GetPalette, GetPaletteForGif} from './palette.js';
 
 const w = 256;
 const h = 200;
@@ -12,37 +13,30 @@ canvas.oncontextmenu = () => false;
 let ctx = canvas.getContext('2d', { alpha: false });
 ctx.imageSmoothingEnabled = false;
 
-
-const cols = 
-[
-    "#FFFF88",
-    "#FFAA88",
-    "#AA8844",
-    "#000000",
-]
-
 let mouseX;
 let mouseY;
 
 let painting = false;
 let right_mouse_button = false;
 
-let t = 0;
-
 let prev = 0;
 let fps_avg = 60;
 let fps_k = 20;
+
+let t = 0;
 
 let gifconfig = {
     gif: null,
     rendering: false,
     blob: null,
+    framecount: 0,
 }
 
 export function StartCapture(progressCallback, resetCallback, downloadLinkCallback) {
+  let gpalette = GetPaletteForGif();
   gifconfig.gif = new GIF({
     workers: 4,
-    globalPalette: [0xFF, 0xFF, 0x88, 0xFF, 0xAA, 0x88, 0xAA, 0x88, 0x44, 0x00, 0x00, 0x00],
+    globalPalette: gpalette,
     quality: 4,
   });
     
@@ -64,6 +58,10 @@ export function StartCapture(progressCallback, resetCallback, downloadLinkCallba
       console.log(progress);
       progressCallback(progress);
   })
+
+  const tt = 1 / (1000 * 1000 * blobCanvas.get_thresh_t_mult());
+  gifconfig.framecount = tt * ((2 * 3.141) * 50);
+  console.log("Recording gif with frames: " + gifconfig.framecount);
 }
 
 export function ResetCapture() {
@@ -74,9 +72,7 @@ export function ResetCapture() {
 
 function updateGif() {
   if (gifconfig.gif) {
-      //const targetframes = 80 * 2 * (50 / fps_avg);
-      const targetframes = 100;
-      if (gifconfig.gif.frames.length > targetframes) {
+      if (gifconfig.gif.frames.length > gifconfig.framecount) {
           if (!gifconfig.rendering) {
               gifconfig.gif.render();
               gifconfig.rendering = true;
@@ -119,6 +115,7 @@ export function Tick(timestep) {
 
     blobCanvas.tick((1000 * 1000) / framerate);
 
+    const cols = GetPalette();
     // Draw
     for (let y = 0 ; y < h-1; y++) {
       for (let x = 0 ; x < w-1; x++) {
@@ -138,11 +135,7 @@ export function Tick(timestep) {
       ctx.fillText(Math.floor(fps_avg), 10, 10)
     }
     
-    //if (t % 2 == 0)
-    {
-        updateGif();
-    }
-
+    updateGif();
     window.requestAnimationFrame(Tick);
 }
 
@@ -172,7 +165,7 @@ canvas.addEventListener('mousedown', event => {
     event.preventDefault();
     blobCanvas.push_undo();
     painting = true;
-    right_mouse_button = event.buttons & 0x2;
+    right_mouse_button = (event.buttons & 0x2) != 0;
 });
 
 window.addEventListener('mouseup', event => {

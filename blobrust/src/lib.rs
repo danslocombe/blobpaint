@@ -248,6 +248,10 @@ impl BlobCanvas {
     self.thresh_t_mult = val;
   }
 
+  pub fn get_thresh_t_mult(&self) -> f32 {
+    self.thresh_t_mult
+  }
+
   pub fn apply_brush(&mut self, x_norm : f32, y_norm : f32, brush : &Brush) {
     self.mutate_brush(x_norm, y_norm, brush, false);
   }

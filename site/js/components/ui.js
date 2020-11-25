@@ -12,7 +12,6 @@ import Accordion from '@material-ui/core/Accordion';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Checkbox from '@material-ui/core/Checkbox';
 
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
@@ -22,6 +21,7 @@ import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/sty
 
 import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger } from './brush.js';
 import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult, Undo, ClearCanvas} from "./paint.js";
+import {GetPaletteName, NextPalette, PrevPalette} from './palette.js';
 
 const theme = createMuiTheme({
   overrides: {
@@ -40,9 +40,16 @@ const theme = createMuiTheme({
 
 theme.typography.h3 = {
   'font-family': "monospace",
-}
-
-console.log(theme);
+};
+theme.typography.h4 = {
+  'font-family': "monospace",
+};
+theme.typography.h5 = {
+  'font-family': "monospace",
+};
+theme.typography.h6 = {
+  'font-family': "monospace",
+};
 
 theme.typography.fontFamily = "monospace";
 theme.typography.body1['font-family'] = "monospace";
@@ -115,6 +122,13 @@ function BrushTabs() {
     </Paper>
   );
 }
+
+const threshBaseDefault = 50;
+const threshVarianceDefault = 40;
+const threshSpeedDefault = 30;
+SetBlobCanvasThreshBase(threshBaseDefault / 100);
+SetBlobCanvasThreshTVar(threshVarianceDefault / 1000);
+SetBlobCanvasThreshTMult(threshSpeedDefault / (10 * 1000 * 1000));
 
 function PaintBrush(props) {
     const value = props.value;
@@ -249,28 +263,30 @@ function PaintBrush(props) {
           </Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <div>
-          <Typography>Thresh base</Typography>
+          <div className={classes.root}>
+          <Typography variant="h4">Threshold</Typography>
+          <br/>
+          <Typography>Baseline</Typography>
           <Slider
-              defaultValue={40}
+              defaultValue={50}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetBlobCanvasThreshBase(val / 100)}}
               min={1}
               max={100}
           />
-          <Typography>Thresh variance</Typography>
+          <Typography>Variance</Typography>
           <Slider
-              defaultValue={100}
+              defaultValue={40}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetBlobCanvasThreshTVar(val / 1000)}}
               min={1}
               max={120}
           />
-          <Typography>Thresh time</Typography>
+          <Typography>Speed</Typography>
           <Slider
-              defaultValue={60}
+              defaultValue={40}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetBlobCanvasThreshTMult(val / (10 * 1000 * 1000))}}
@@ -280,13 +296,11 @@ function PaintBrush(props) {
           </div>
         </AccordionDetails>
         </Accordion>
+        <PaletteUI />
         <ResetUndoUI />
         </div>
     );
 }
-
-ReactDOM.render(<UI />, document.querySelector('#uiroot'));
-
 
 function ExportUI(props) {
   const value = props.value;
@@ -298,13 +312,17 @@ function ExportUI(props) {
   const [downloadLink, setDownloadLink] = React.useState("");
   return (
     <div className={classes.root} hidden={value !== index}>
-    <Typography variant="h3">
+    <Typography>
+      <u>
     Export GIF
+</u>
+    </Typography>
+    <Typography>
+    Frame count set based on threshold animation speed. Exports one full cycle.
     </Typography>
     <div className={classSpacing.root}>
     <Button key="0" variant="contained" color="primary" onClick={(evt) => {
         if (downloadLink.length > 0) {
-          console.log("Downloading - " + downloadLink)
           window.open(downloadLink);
         }
         else {
@@ -328,15 +346,43 @@ function ExportUI(props) {
   );
 }
 
+function PaletteUI() {
+  const [paletteName, setPaletteName] = React.useState(GetPaletteName())
+ // const classes = useStyles();
+  const classSpacing = useStylesSpacing();
+  return (
+    <Accordion>
+    <AccordionSummary
+      expandIcon={<ExpandMoreIcon />}
+      aria-controls="panel1a-content"
+      id="panel1a-header"
+    >
+      <Typography>
+        Colour Palette
+      </Typography>
+    </AccordionSummary>
+    <AccordionDetails>
+    <div className={classSpacing.root}>
+    <Typography>{paletteName}</Typography>
+    <Button key="0" variant="outlined" color="primary" onClick={(evt) => {PrevPalette(); setPaletteName(GetPaletteName)}}> Prev </Button>
+    <Button key="1" variant="outlined" color="secondary" onClick={(evt) => {NextPalette(); setPaletteName(GetPaletteName)}}> Next </Button>
+    </div>
+      </AccordionDetails>
+      </Accordion>
+  );
+}
+
 function ResetUndoUI() {
   const classes = useStyles();
   const classSpacing = useStylesSpacing();
   return (
     <div className={classes.root}>
     <div className={classSpacing.root}>
-    <Button key="0" variant="contained" color="primary" onClick={(evt) => {Undo()}}> Undo </Button>
-    <Button key="1" variant="contained" color="secondary" onClick={(evt) => {ClearCanvas()}}> Clear </Button>
+    <Button key="0" variant="outlined" color="primary" onClick={(evt) => {Undo()}}> Undo </Button>
+    <Button key="1" variant="outlined" color="secondary" onClick={(evt) => {ClearCanvas()}}> Clear </Button>
     </div>
     </div>
   );
 }
+
+ReactDOM.render(<UI />, document.querySelector('#uiroot'));
