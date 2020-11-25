@@ -130,7 +130,7 @@ impl BlobCanvas {
 impl BlobCanvas {
   pub fn mutate_brush(& mut self, x_norm : f32, y_norm : f32, brush : &Brush, remove : bool) {
 
-    let rad = 25;
+    let rad = (brush.size / 2.0) as i32;
 
     let px = (x_norm * (self.width as f32)).floor() as i32;
     let py = (y_norm * (self.height as f32)).floor() as i32;
@@ -156,9 +156,10 @@ impl BlobCanvas {
           },
           BrushType::Outliner => {
             let dist = (sqr(dx) + sqr(dy)).sqrt();
-            if dist < 5.0  {
+            let outliner_config = brush.outliner.as_ref().unwrap();
+            if dist < outliner_config.size {
               let point_data = api.get_mut();
-              point_data.thresh_band = 0.40;
+              point_data.thresh_band = outliner_config.height;
             }
           },
           BrushType::Smudger => {

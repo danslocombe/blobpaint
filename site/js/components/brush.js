@@ -5,6 +5,28 @@ let brushOutliner = Brush.new_outliner();
 let brushSmudger = Brush.new_smudger();
 let brush = brushPaintbrush;
 
+export function SetSize(brush, size) {
+  switch (brush) {
+    case "paintbrush":
+      brushPaintbrush.set_size(size);
+      break;
+    case "outliner":
+      brushOutliner.set_size(size);
+      break;
+    case "smudger":
+      brushSmudger.set_size(size);
+      break;
+  }
+}
+
+export function SetOutlinerSize(size) {
+  brushOutliner.set_size(size);
+}
+
+export function SetOutlinerHeight(h) {
+  brushOutliner.set_outliner_height(h);
+}
+
 export function ResetPaintbrush() {
     brush = brushPaintbrush;
 }

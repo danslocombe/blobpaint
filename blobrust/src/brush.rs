@@ -53,7 +53,8 @@ impl BrushT for Paintbrush {
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 pub struct Outliner {
-  pub size: u32,
+  pub size: f32,
+  pub height: f32,
 }
 
 #[wasm_bindgen]
@@ -64,6 +65,8 @@ pub struct Smudger {
   curve: f32,
   smudge_vec_x: f32,
   smudge_vec_y: f32,
+  smudge_vec_x_norm: f32,
+  smudge_vec_y_norm: f32,
   pub size: u32,
 }
 
@@ -71,12 +74,19 @@ fn lerpk(x0: f32, x1: f32, k: f32) -> f32 {
   (x0 * k + x1) / (k + 1.0)
 }
 
+fn normalize(x : f32, y : f32) -> (f32, f32) {
+  let mag = (sqr(x) + sqr(y)).sqrt();
+  (x / mag, y / mag)
+}
+
 impl<'t> Smudger {
   pub fn apply_smudge(&self, offset_x : f32, offset_y : f32, mut api : CanvasApi<'t>) {
 
     // Want to apply smudge only to points in the direction of the smudge
     // Strength is dot of offset from the brush centre with the smudge vector
-    let strength = (self.smudge_vec_x * offset_x + self.smudge_vec_y * offset_y).max(0.0);
+    let offset_dist = (sqr(offset_x) + sqr(offset_x)).sqrt();
+    let (offset_x_norm, offset_y_norm) = (offset_x / offset_dist, offset_y / offset_dist);
+    let strength = (self.smudge_vec_x_norm * offset_x_norm + self.smudge_vec_y * offset_y_norm).max(0.0);
 
     if strength > 0.0 {
       // Todo interpolate
@@ -85,7 +95,8 @@ impl<'t> Smudger {
 
       match api.try_get_offset(sample_xo, sample_yo) {
         Some(source_smudge) => {
-          let k = 8.0;
+          let k = 2.0 * (1.0 + offset_dist);
+
           let mut cur = api.get_mut();
           cur.thresh_band = lerpk(cur.thresh_band, source_smudge.thresh_band, k);
           cur.color_band = lerpk(cur.color_band, source_smudge.color_band, k);
@@ -107,6 +118,7 @@ pub struct Brush {
   pub paintbrush : Option<Paintbrush>,
   pub outliner : Option<Outliner>,
   pub smudger : Option<Smudger>,
+  pub size : f32,
 }
 
 #[wasm_bindgen]
@@ -120,6 +132,7 @@ impl Brush {
         curve: curve,
         color: 0.0,
     });
+    brush.size = 24.0;
 
     brush
   }
@@ -128,8 +141,10 @@ impl Brush {
     let mut brush = Brush::default();
     brush.brush_type = BrushType::Outliner;
     brush.outliner = Some(Outliner {
-      size: 8,
+      size: 4.0,
+      height: 0.5,
     });
+    brush.size = 8.0;
 
     brush
   }
@@ -141,12 +156,23 @@ impl Brush {
       smudge_dist_mult: 16.0,
       smudge_vec_x : 1.0,
       smudge_vec_y : 0.0,
+      smudge_vec_x_norm : 1.0,
+      smudge_vec_y_norm : 0.0,
       curve: 0.0,
       mult: 0.0,
       size: 8,
     });
+    brush.size = 8.0;
 
     brush
+  }
+
+  pub fn set_size(&mut self, size : f32) {
+    self.size = size;
+    match self.brush_type {
+      BrushType::Outliner => {self.outliner.as_mut().unwrap().size = size / 2.0},
+      _ => {},
+    }
   }
   
   pub fn set_curve(&mut self, curve : f32) {
@@ -170,16 +196,35 @@ impl Brush {
     }
   }
 
+  pub fn set_outliner_height(&mut self, height: f32) {
+    match self.brush_type {
+      BrushType::Outliner => {self.outliner.as_mut().unwrap().height = height},
+      _ => {},
+    }
+  }
+
   pub fn set_smudger_dx(&mut self, dx: f32) {
     match self.brush_type {
-      BrushType::Smudger => {self.smudger.as_mut().unwrap().smudge_vec_x = dx},
+      BrushType::Smudger => {
+        let smudger = self.smudger.as_mut().unwrap();
+        smudger.smudge_vec_x = dx;
+        let (nx, ny) = normalize(smudger.smudge_vec_x, smudger.smudge_vec_y);
+        smudger.smudge_vec_x_norm = nx;
+        smudger.smudge_vec_y_norm = ny;
+      },
       _ => {},
     }
   }
 
   pub fn set_smudger_dy(&mut self, dy: f32) {
     match self.brush_type {
-      BrushType::Smudger => {self.smudger.as_mut().unwrap().smudge_vec_y = dy},
+      BrushType::Smudger => {
+        let smudger = self.smudger.as_mut().unwrap();
+        smudger.smudge_vec_y = dy;
+        let (nx, ny) = normalize(smudger.smudge_vec_x, smudger.smudge_vec_y);
+        smudger.smudge_vec_x_norm = nx;
+        smudger.smudge_vec_y_norm = ny;
+      },
       _ => {},
     }
   }

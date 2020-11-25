@@ -2,6 +2,7 @@ import { GetBrush, RecordMousePos } from "./brush.js";
 import {BlobCanvas} from "blobrust";
 import GIF from 'gif.js';
 import {GetPalette, GetPaletteForGif} from './palette.js';
+import {GetBrushTab} from './ui.js';
 
 const w = 256;
 const h = 200;
@@ -131,8 +132,11 @@ export function Tick(timestep) {
       const fps = 1000 / dt_ms; 
       fps_avg = (fps_avg * (fps_k) + fps) / (fps_k + 1)
 
-      ctx.fillStyle = "#000000";
-      ctx.fillText(Math.floor(fps_avg), 10, 10)
+      if (GetBrushTab() == 0)
+      {
+        ctx.fillStyle = "#000000";
+        ctx.fillText(Math.floor(fps_avg), 10, 10)
+      }
     }
     
     updateGif();

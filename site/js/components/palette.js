@@ -40,6 +40,7 @@ const palettes = [
 ]
 
 
+//let current = Math.floor(Math.random() * (palettes.length - 1));
 let current = 0;
 
 export function GetPalette() {

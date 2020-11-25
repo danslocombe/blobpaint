@@ -19,7 +19,7 @@ import Tab from '@material-ui/core/Tab';
 
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
-import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger } from './brush.js';
+import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger, SetSize, SetOutlinerHeight, SetOutlinerSize } from './brush.js';
 import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult, Undo, ClearCanvas} from "./paint.js";
 import {GetPaletteName, NextPalette, PrevPalette} from './palette.js';
 
@@ -98,11 +98,17 @@ function renderBrushConfig() {
 
 setTimeout(renderBrushConfig, 10);
 
+let brushTab = 0;
+export function GetBrushTab() {
+  return brushTab;
+}
+
 function BrushTabs() {
   const [value, setValue] = React.useState(0);
   
   const handleChange = (event, newValue) => {
     setValue(newValue);
+    brushTab = newValue;
   };
 
   return (
@@ -169,6 +175,16 @@ function PaintBrush(props) {
         </AccordionSummary>
         <AccordionDetails>
           <div>
+          <Typography>Size</Typography>
+          <Slider
+              defaultValue={24}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {SetSize("paintbrush", val)}}
+              min={1}
+              max={64}
+          />
+          <Typography variant="h4">Shape</Typography>
           <Typography>Curve</Typography>
           <Slider
               defaultValue={200}
@@ -231,6 +247,15 @@ function PaintBrush(props) {
           />
         </AccordionSummary>
         <AccordionDetails>
+          <Typography>Size</Typography>
+          <Slider
+              defaultValue={8}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {SetSize("outliner", val)}}
+              min={1}
+              max={64}
+          />
         </AccordionDetails>
         </Accordion>
         <Accordion>
@@ -249,6 +274,15 @@ function PaintBrush(props) {
           />
         </AccordionSummary>
         <AccordionDetails>
+          <Typography>Size</Typography>
+          <Slider
+              defaultValue={32}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {SetSize("smudger", val)}}
+              min={1}
+              max={90}
+          />
         </AccordionDetails>
         </Accordion>
         </RadioGroup>
@@ -271,7 +305,7 @@ function PaintBrush(props) {
               defaultValue={50}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
-              onChange={ (e, val) => {SetBlobCanvasThreshBase(val / 100)}}
+              onChange={ (e, val) => {SetBlobCanvasThreshBase(val / 100); SetOutlinerHeight(val / 100)}}
               min={1}
               max={100}
           />
