@@ -172,14 +172,18 @@ impl BlobCanvas {
   }
 }
 
-#[wasm_bindgen]
-impl BlobCanvas {
-  pub fn new(width : u32, height: u32) -> Self {
-    let size = width*height;
+fn empty_canvas_data(size: usize) -> DataDoubleBuffer<PointData> {
     let mut data = Vec::with_capacity(size as usize);
     for _i in 0..size {
       data.push(PointData::new(0.0, 0.0));
     }
+    DataDoubleBuffer::new(data)
+}
+
+#[wasm_bindgen]
+impl BlobCanvas {
+  pub fn new(width : u32, height: u32) -> Self {
+    let size = width * height;
 
     BlobCanvas {
       width : width,
@@ -187,7 +191,7 @@ impl BlobCanvas {
       thresh_base: 0.4,
       thresh_t_var: 0.095,
       thresh_t_mult: TAU / 1_000_000.0,
-      data : DataDoubleBuffer::new(data),
+      data : empty_canvas_data(size as usize),
       undo_stack : VecDeque::with_capacity(MAX_UNDOS+1),
       t : 0,
     }
@@ -199,20 +203,11 @@ impl BlobCanvas {
   }
 
   pub fn sample_pixel(&self, x : u32, y : u32) -> Color {
-    let i = self.get_index(x, y);
-
-    const THRESH_BASE : f32 = 0.4;
-    const THRESH_T_VAR : f32 = 0.095;
-    const T_MULT : f32 = TAU / (1_000_000.0);
-
-    //const THRESH_T_VAR : f32 = 0.035;
-    //const T_MULT : f32 = TAU / (60.0 * 80.0);
-    //const T_MULT : f32 = TAU / (80.0 * 60.0 * 1_000_000.0);
-
     let t = self.t as f32 * self.thresh_t_mult;
     let t_y_var = t + TAU * (y as f32) / self.height as f32;
 
     let thresh = self.thresh_base + self.thresh_t_var * (t_y_var).sin();
+    let i = self.get_index(x, y);
     let point_data = self.data.get_imm()[i];
     point_data.sample(thresh, 0.05)
   }
@@ -234,6 +229,11 @@ impl BlobCanvas {
       },
       _ => false,
     }
+  }
+
+  pub fn clear(&mut self) {
+    self.push_undo();
+    self.data = empty_canvas_data(self.data.len())
   }
 
   pub fn set_thresh_base(&mut self, val : f32) {

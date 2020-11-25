@@ -26,6 +26,10 @@ impl<T> DataDoubleBuffer<T> where T : Copy + Sized {
         self.mut_data.clone()
     }
 
+    pub fn len(&self) -> usize {
+        self.mut_data.len()
+    }
+
     pub fn incr(&mut self) {
         unsafe {
             let src_ptr = self.mut_data.as_ptr(); 

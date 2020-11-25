@@ -21,7 +21,7 @@ import Tab from '@material-ui/core/Tab';
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
 import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger } from './brush.js';
-import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult} from "./paint.js";
+import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult, Undo, ClearCanvas} from "./paint.js";
 
 const theme = createMuiTheme({
   overrides: {
@@ -334,16 +334,8 @@ function ResetUndoUI() {
   return (
     <div className={classes.root}>
     <div className={classSpacing.root}>
-    <Button key="0" variant="contained" color="primary" onClick={(evt) => {
-    }}>
-      Undo
-    </Button>
-    <Button key="1" variant="contained" color="secondary" onClick={
-        (evt) => {
-        }
-      }>
-      Clear
-    </Button>
+    <Button key="0" variant="contained" color="primary" onClick={(evt) => {Undo()}}> Undo </Button>
+    <Button key="1" variant="contained" color="secondary" onClick={(evt) => {ClearCanvas()}}> Clear </Button>
     </div>
     </div>
   );

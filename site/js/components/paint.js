@@ -155,6 +155,12 @@ export function SetBlobCanvasThreshTVar(x) {
 export function SetBlobCanvasThreshTMult(x) {
   blobCanvas.set_thresh_t_mult(x);
 }
+export function Undo() {
+  blobCanvas.try_pop_undo();
+}
+export function ClearCanvas() {
+  blobCanvas.clear();
+}
 
 canvas.addEventListener('mousemove', event => {
     let rect = canvas.getBoundingClientRect();
@@ -176,6 +182,6 @@ window.addEventListener('mouseup', event => {
 
 window.addEventListener('keydown', event => {
   if ((event.code === "KeyZ" || event.keyCode === 90) && event.ctrlKey) {
-    let _success = blobCanvas.try_pop_undo();
+    Undo();
   }
 });
