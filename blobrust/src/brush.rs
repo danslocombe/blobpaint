@@ -19,13 +19,6 @@ impl Default for BrushType {
   }
 }
 
-// TODO find a better name for this trait.
-// Brush Tool?
-// Point mutator?
-pub trait BrushT {
-  fn apply_point_mut(&self, dx: f32, dy: f32, p: &mut PointData, remove: bool);
-}
-
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 pub struct Paintbrush {
@@ -39,10 +32,8 @@ impl Paintbrush {
   fn sample(&self, dist : f32) -> f32 {
     self.mult / (1.0 + self.curve * dist)
   }
-}
 
-impl BrushT for Paintbrush {
-  fn apply_point_mut(&self, dx : f32, dy : f32, p : &mut PointData, remove : bool) {
+  pub fn apply_point_mut(&self, dx : f32, dy : f32, p : &mut PointData, remove : bool) {
     let dist = (sqr(dx) + sqr(dy)).sqrt();
     let k = self.sample(dist);
     p.thresh_band = lerp_brush_thresh(p.thresh_band, k, remove);
@@ -89,19 +80,17 @@ impl<'t> Smudger {
     let strength = (self.smudge_vec_x_norm * offset_x_norm + self.smudge_vec_y * offset_y_norm).max(0.0);
 
     if strength > 0.0 {
-      // Todo interpolate
+      // Todo interpolate?
       let sample_xo = (self.smudge_vec_x * self.smudge_dist_mult) as i32;
       let sample_yo = (self.smudge_vec_y * self.smudge_dist_mult) as i32;
 
-      match api.try_get_offset(sample_xo, sample_yo) {
+      match api.try_get_point(sample_xo, sample_yo) {
         Some(source_smudge) => {
           let k = 2.0 * (1.0 + offset_dist);
 
           let mut cur = api.get_mut();
           cur.thresh_band = lerpk(cur.thresh_band, source_smudge.thresh_band, k);
           cur.color_band = lerpk(cur.color_band, source_smudge.color_band, k);
-          //cur.thresh_band = (source_smudge.thresh_band + cur.thresh_band) / 2.0;
-          //cur.color_band = (source_smudge.color_band + cur.color_band) / 2.0;
         }
         _ => {},
       }
@@ -249,6 +238,31 @@ impl Brush {
       _ => 0.0,
     }
     */
+  }
+}
+
+impl<'t> Brush {
+  pub fn sample_canvas(&self, dx: f32, dy: f32, mut api: CanvasApi<'t>, remove: bool)
+  {
+    match self.brush_type {
+      BrushType::Inv => {
+        let paintbrush = self.paintbrush.as_ref().unwrap();
+        paintbrush.apply_point_mut(dx, dy, api.get_mut(), remove);
+      },
+      BrushType::Outliner => {
+        let dist = (sqr(dx) + sqr(dy)).sqrt();
+        let outliner_config = self.outliner.as_ref().unwrap();
+        if dist < outliner_config.size {
+          let point_data = api.get_mut();
+          point_data.thresh_band = outliner_config.height;
+        }
+      },
+      BrushType::Smudger => {
+        let smudge = self.smudger.as_ref().unwrap();
+        smudge.apply_smudge(dx, dy, api);
+      }
+      _ => {},
+    }
   }
 }
 

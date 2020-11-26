@@ -1,6 +1,10 @@
 use std::ptr;
 
-// Represents a data double buffer where the current
+/// Contains a mutable and immutable copy of the same data.
+/// 
+/// We use this to provide an interface to brushes. The brush can
+/// read data from the immutable buffer representing data in the previous frame,
+/// and write to the mutable data to prepare the next frame.
 pub struct DataDoubleBuffer<T> where T : Copy + Sized {
     mut_data : Vec<T>,
     imm_data : Vec<T>,
@@ -30,7 +34,8 @@ impl<T> DataDoubleBuffer<T> where T : Copy + Sized {
         self.mut_data.len()
     }
 
-    pub fn incr(&mut self) {
+    /// Flush the mutable data and copy it into the immutable buffer.
+    pub fn flush(&mut self) {
         unsafe {
             let src_ptr = self.mut_data.as_ptr(); 
             let dst_ptr = self.imm_data.as_mut_ptr();
