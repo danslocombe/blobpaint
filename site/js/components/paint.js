@@ -199,19 +199,20 @@ document.getElementById("uiroot").addEventListener("touchmove", (e) => {
   }
 });
 
+function setMousePosFromTouch() {
+  let rect = canvas.getBoundingClientRect();
+  mouseX = event.touches[0].clientX / rect.width;
+  mouseY = event.touches[0].clientY / rect.height;
+}
+
 canvas.addEventListener("touchstart", event => {
-  event.preventDefault();
-  blobCanvas.push_undo();
-  painting = true;
-
-  mouseX = 0.5;
-  mouseY = 0.5;
-
   if (event.cancelable) {
     event.preventDefault();
   }
 
-  handleTouches(event);
+  blobCanvas.push_undo();
+  painting = true;
+  setMousePosFromTouch();
 });
 
 canvas.addEventListener("touchend", event => {
@@ -226,7 +227,5 @@ canvas.addEventListener("touchmove", event => {
   if (event.cancelable) {
     event.preventDefault();
   }
-  let rect = canvas.getBoundingClientRect();
-  mouseX = event.touches[0].clientX / rect.width;
-  mouseY = event.touches[0].clientY / rect.height;
+  setMousePosFromTouch();
 });
