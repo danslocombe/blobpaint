@@ -66,6 +66,8 @@ static RAND_SEED : [u8; 16] = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 impl BlobCanvas {
   pub fn new(width : u32, height: u32) -> Self {
     let size = width * height;
+    let mut rng = XorShiftRng::from_seed(RAND_SEED);
+    let canvas_data = empty_canvas_data(size as usize, &mut rng);
 
     BlobCanvas {
       width : width,
@@ -73,10 +75,10 @@ impl BlobCanvas {
       thresh_base: 0.4,
       thresh_t_var: 0.095,
       thresh_t_mult: TAU / 1_000_000.0,
-      data : empty_canvas_data(size as usize),
+      data : canvas_data,
       undo_stack : VecDeque::with_capacity(MAX_UNDOS+1),
       t : 0,
-      rng: XorShiftRng::from_seed(RAND_SEED),
+      rng: rng,
     }
   }
 
@@ -116,7 +118,7 @@ impl BlobCanvas {
 
   pub fn clear(&mut self) {
     self.push_undo();
-    self.data = empty_canvas_data(self.data.len())
+    self.data = empty_canvas_data(self.data.len(), &mut self.rng)
   }
 
   pub fn set_thresh_base(&mut self, val : f32) {
@@ -172,10 +174,11 @@ impl BlobCanvas {
   }
 }
 
-fn empty_canvas_data(size: usize) -> DataDoubleBuffer<PointData> {
+fn empty_canvas_data(size: usize, rng: &mut dyn RngCore) -> DataDoubleBuffer<PointData> {
     let mut data = Vec::with_capacity(size as usize);
     for _i in 0..size {
-      data.push(PointData::new(0.0, 0.0));
+      let col = rand_unit(rng);
+      data.push(PointData::new(0.0, col));
     }
     DataDoubleBuffer::new(data)
 }
@@ -220,7 +223,6 @@ impl PointData {
     }
 
     if self.thresh_band > thresh {
-      // Decide on y or x
       let seed = rand_unit(rng);
       if self.color_band < seed {
         Color::X

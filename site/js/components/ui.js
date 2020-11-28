@@ -276,12 +276,12 @@ function PaintBrush(props) {
         <AccordionDetails>
           <Typography>Size</Typography>
           <Slider
-              defaultValue={32}
+              defaultValue={64}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetSize("smudger", val)}}
-              min={1}
-              max={90}
+              min={24}
+              max={140}
           />
         </AccordionDetails>
         </Accordion>
