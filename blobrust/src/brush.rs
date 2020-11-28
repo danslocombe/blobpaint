@@ -112,7 +112,7 @@ pub struct Brush {
 
 #[wasm_bindgen]
 impl Brush {
-  pub fn new_inv(size : u32, mult : f32, curve : f32) -> Self {
+  pub fn new_inv(size : u32, curve : f32, mult : f32) -> Self {
     let mut brush = Brush::default();
     brush.brush_type = BrushType::Inv;
     brush.paintbrush = Some(Paintbrush {
@@ -121,7 +121,7 @@ impl Brush {
         curve: curve,
         color: 0.0,
     });
-    brush.size = 24.0;
+    brush.size = size as f32;
 
     brush
   }

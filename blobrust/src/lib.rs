@@ -102,8 +102,7 @@ impl BlobCanvas {
     let t_y_var = t + TAU * (y as f32) / self.height as f32;
 
     let thresh = self.thresh_base + self.thresh_t_var * (t_y_var).sin();
-    let i = self.data.get_index(x, y);
-    let point_data = self.data.get_imm()[i];
+    let point_data = self.data.get(x, y);
     point_data.sample(&mut self.rng, thresh, 0.05)
   }
 
@@ -264,14 +263,12 @@ pub struct CanvasApi<'t> {
 
 impl<'t> CanvasApi<'t>{
   pub fn get_mut(&mut self) -> &mut PointData {
-    let i = self.canvas.data.get_index(self.x, self.y);
-    &mut self.canvas.data.get_mut()[i]
+    self.canvas.data.get_mut(self.x, self.y)
   }
 
   pub fn try_get_point(&self, xoff : i32, yoff: i32) -> Option<PointData> {
     let x = self.x as i32 + xoff;
     let y = self.y as i32 + yoff;
-    self.canvas.data.try_get_index(x, y)
-      .map(|i| self.canvas.data.get_imm()[i])
+    self.canvas.data.try_get(x, y)
   }
 }

@@ -91,11 +91,11 @@ impl PointDataStore {
         }
     }
 
-    pub fn get_index(&self, x: u32, y: u32) -> usize {
+    fn get_index(&self, x: u32, y: u32) -> usize {
         (y * self.width + x) as usize
     }
 
-    pub fn try_get_index(&self, x: i32, y: i32) -> Option<usize> {
+    fn try_get_index(&self, x: i32, y: i32) -> Option<usize> {
         if x < 0 || x >= self.width as i32 || y < 0 || y >= self.height as i32 {
             None
         }
@@ -104,8 +104,19 @@ impl PointDataStore {
         }
     }
 
-    pub fn get_mut(&mut self) -> &mut [PointData] {
-        &mut self.mut_data
+    pub fn get_mut(&mut self, x : u32, y : u32) -> &mut PointData {
+        let i = self.get_index(x, y);
+        &mut self.mut_data[i]
+    }
+
+    pub fn get(&self, x : u32, y : u32) -> PointData {
+        let i = self.get_index(x, y);
+        self.imm_data[i]
+    }
+
+    pub fn try_get(&self, x : i32, y : i32) -> Option<PointData> {
+        self.try_get_index(x, y)
+            .map(|i| self.imm_data[i])
     }
 
     pub fn set_dirty(&mut self, rect : DirtyRect) {
@@ -119,10 +130,6 @@ impl PointDataStore {
 
     pub fn get_last_dirty(&self) -> &DirtyRect {
         &self.dirty_last
-    }
-
-    pub fn get_imm(&self) -> &[PointData] {
-        &self.imm_data
     }
 
     pub fn get_clone(&self) -> Vec<PointData> {
