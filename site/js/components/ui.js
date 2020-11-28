@@ -181,7 +181,7 @@ function PaintBrush(props) {
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetSize("paintbrush", val)}}
-              min={1}
+              min={2}
               max={64}
           />
           <Typography variant="h4">Shape</Typography>
@@ -253,7 +253,7 @@ function PaintBrush(props) {
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetSize("outliner", val)}}
-              min={1}
+              min={2}
               max={64}
           />
         </AccordionDetails>

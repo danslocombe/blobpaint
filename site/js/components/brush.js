@@ -1,8 +1,8 @@
 import { Brush } from "../../node_modules/blobrust/blobrust.js"
 
 let brushPaintbrush = Brush.new_inv(32, 6, 1.25);
-let brushOutliner = Brush.new_outliner();
-let brushSmudger = Brush.new_smudger();
+let brushOutliner = Brush.new_outliner(8);
+let brushSmudger = Brush.new_smudger(64);
 let brush = brushPaintbrush;
 
 export function SetSize(brush, size) {

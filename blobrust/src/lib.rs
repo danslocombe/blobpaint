@@ -22,6 +22,14 @@ use brush::{Brush};
 
 const MAX_UNDOS : usize = 8;
 
+/*
+  Import when debugging
+#[wasm_bindgen]
+extern {
+  pub fn alert(s: &str);
+}
+*/
+
 #[wasm_bindgen]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

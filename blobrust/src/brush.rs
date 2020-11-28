@@ -126,19 +126,19 @@ impl Brush {
     brush
   }
   
-  pub fn new_outliner() -> Self {
+  pub fn new_outliner(size : f32) -> Self {
     let mut brush = Brush::default();
     brush.brush_type = BrushType::Outliner;
     brush.outliner = Some(Outliner {
-      size: 4.0,
+      size: size,
       height: 0.5,
     });
-    brush.size = 8.0;
+    brush.size = size;
 
     brush
   }
   
-  pub fn new_smudger() -> Self {
+  pub fn new_smudger(size : f32) -> Self {
     let mut brush = Brush::default();
     brush.brush_type = BrushType::Smudger;
     brush.smudger = Some(Smudger {
@@ -149,9 +149,9 @@ impl Brush {
       smudge_vec_y_norm : 0.0,
       curve: 0.0,
       mult: 0.0,
-      size: 8,
+      size: size as u32,
     });
-    brush.size = 8.0;
+    brush.size = size;
 
     brush
   }
