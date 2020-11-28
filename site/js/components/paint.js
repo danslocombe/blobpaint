@@ -1,5 +1,6 @@
 import { GetBrush, RecordMousePos } from "./brush.js";
 import {BlobCanvas} from "blobrust";
+import * as wasm from "../../node_modules/blobrust/blobrust_bg.wasm";
 import GIF from 'gif.js';
 import {GetPalette, GetPaletteForGif} from './palette.js';
 import {GetBrushTab} from './ui.js';
@@ -117,15 +118,21 @@ export function Tick(timestep) {
     blobCanvas.tick((1000 * 1000) / framerate);
 
     const cols = GetPalette();
+
     // Draw
-    for (let y = 0 ; y < h-1; y++) {
-      for (let x = 0 ; x < w-1; x++) {
-        if (Math.random() < 0.05) {
-          const sampled = blobCanvas.sample_pixel(x, y);
-          ctx.fillStyle = cols[sampled];
-          ctx.fillRect(x, y, 2, 2);
-        }
-      }
+    const drawBufSize = blobCanvas.get_draw_buffer_size();
+    blobCanvas.fill_draw_buffer();
+    const drawBufPtr = blobCanvas.get_draw_buffer();
+    const drawBuf = new Uint8Array(wasm.memory.buffer, drawBufPtr, drawBufSize * 3);
+
+    let i = 0;
+    while (i < drawBufSize * 3) {
+      const x = drawBuf[i++];
+      const y = drawBuf[i++];
+      const col = drawBuf[i++];
+
+      ctx.fillStyle = cols[col];
+      ctx.fillRect(x, y, 2, 2);
     }
 
     if (dt_ms > 0) {

@@ -32,6 +32,24 @@ pub enum Color {
   THRESH,
 }
 
+impl Default for Color {
+  fn default() -> Self {
+    Color::X
+  }
+}
+
+/// A point to be draw to the html canvas.
+/// If we ever want to have a canvas larger than 256 x 256
+/// this needs to be increased.
+#[wasm_bindgen]
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub struct DrawPoint {
+  pub x : u8, 
+  pub y : u8,
+  pub col: Color,
+}
+
 #[wasm_bindgen]
 pub struct BlobCanvas {
   width : u32,
@@ -41,6 +59,7 @@ pub struct BlobCanvas {
   thresh_t_mult : f32,
   data : DataDoubleBuffer<PointData>,
   undo_stack : VecDeque<Vec<PointData>>,
+  draw_buffer: Vec<DrawPoint>,
   t : u32,
   rng: XorShiftRng,
 }
@@ -62,12 +81,19 @@ impl BlobCanvas {
 
 static RAND_SEED : [u8; 16] = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
 
+
 #[wasm_bindgen]
 impl BlobCanvas {
   pub fn new(width : u32, height: u32) -> Self {
     let size = width * height;
     let mut rng = XorShiftRng::from_seed(RAND_SEED);
     let canvas_data = empty_canvas_data(size as usize, &mut rng);
+
+    let pixels_updated_per_frame : usize = ((width as f32) * (height as f32) * 0.05) as usize;
+    let mut draw_buffer = Vec::with_capacity(pixels_updated_per_frame);
+    for _i in 0..pixels_updated_per_frame {
+      draw_buffer.push(DrawPoint::default());
+    }
 
     BlobCanvas {
       width : width,
@@ -77,6 +103,7 @@ impl BlobCanvas {
       thresh_t_mult: TAU / 1_000_000.0,
       data : canvas_data,
       undo_stack : VecDeque::with_capacity(MAX_UNDOS+1),
+      draw_buffer: draw_buffer,
       t : 0,
       rng: rng,
     }
@@ -97,8 +124,30 @@ impl BlobCanvas {
     point_data.sample(&mut self.rng, thresh, 0.05)
   }
 
-  pub fn push_undo(&mut self) {
+  pub fn fill_draw_buffer(&mut self) {
+    for i in 0..self.draw_buffer.len() {
+      let x = self.rng.next_u32() % self.width;
+      let y = self.rng.next_u32() % self.height;
+      let col = self.sample_pixel(x, y);
+      self.draw_buffer[i] = DrawPoint {
+        x : x as u8,
+        y : y as u8,
+        col : col
+      }
+    }
+  }
 
+  pub fn get_draw_buffer_size(&self) -> usize {
+    self.draw_buffer.len()
+  }
+
+  pub fn get_draw_buffer(&self) -> *const DrawPoint {
+      self.draw_buffer.as_ptr()
+  }
+
+  pub fn push_undo(&mut self) {
+    // TODO
+    // Setup ring buffer so we don't have to allocate.
     self.undo_stack.push_back(self.data.get_clone());
 
     while self.undo_stack.len() > MAX_UNDOS {
