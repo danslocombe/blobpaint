@@ -3,6 +3,7 @@ import { Brush } from "../../node_modules/blobrust/blobrust.js"
 let brushPaintbrush = Brush.new_inv(32, 6, 1.25);
 let brushOutliner = Brush.new_outliner(8);
 let brushSmudger = Brush.new_smudger(64);
+let brushColorer = Brush.new_colorer(12);
 let brush = brushPaintbrush;
 
 export function SetSize(brush, size) {
@@ -16,11 +17,10 @@ export function SetSize(brush, size) {
     case "smudger":
       brushSmudger.set_size(size);
       break;
+    case "colorer":
+      brushSmudger.set_size(size);
+      break;
   }
-}
-
-export function SetOutlinerSize(size) {
-  brushOutliner.set_size(size);
 }
 
 export function SetOutlinerHeight(h) {
@@ -39,8 +39,25 @@ export function ResetSmudger() {
     brush = brushSmudger;
 }
 
-export function GetBrush() {
-    return brush;
+export function ResetColorer() {
+  brush = brushColorer;
+}
+
+export function GetBrush(name) {
+  if (name) {
+  switch (name) {
+    case "paintbrush":
+      return brushPaintbrush;
+    case "outliner":
+      return brushOutliner;
+    case "smudger":
+      return brushSmudger;
+    case "colorer":
+      return brushColorer;
+    }
+  }
+
+  return brush;
 }
 
 let mousePrevSmoothX = 0;

@@ -19,7 +19,7 @@ import Tab from '@material-ui/core/Tab';
 
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
-import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger, SetSize, SetOutlinerHeight, SetOutlinerSize } from './brush.js';
+import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger, ResetColorer, SetSize, SetOutlinerHeight} from './brush.js';
 import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult, Undo, ClearCanvas} from "./paint.js";
 import {GetPaletteName, NextPalette, PrevPalette} from './palette.js';
 
@@ -144,14 +144,15 @@ function PaintBrush(props) {
     const [tool, setToolState] = React.useState("paintbrush");
     let setTool = (tool) =>  {
       setToolState(tool);
-      if (tool === "paintbrush") {
-        ResetPaintbrush();
-      }
-      else if (tool === "outliner"){
-        ResetOutliner();
-      }
-      else if (tool === "smudger"){
-        ResetSmudger();
+      switch(tool) {
+        case "paintbrush":
+          return ResetPaintbrush();
+        case "outliner":
+          return ResetOutliner();
+        case "smudger":
+          return ResetSmudger();
+        case "colorer":
+          return ResetColorer();
       }
     }
     
@@ -210,7 +211,7 @@ function PaintBrush(props) {
           <FormControl component="fieldset">
           <FormLabel component="legend" color={color}>Colour</FormLabel>
           <RadioGroup row aria-label="position" name="position" defaultValue={color} onChange={(e, val) => {
-              GetBrush().set_color(val == "primary" ? 0.0 : 1.0);
+              GetBrush("paintbrush").set_color(val == "primary" ? 0.0 : 1.0);
               setColorReactState(val);
             }
           }>
@@ -255,6 +256,41 @@ function PaintBrush(props) {
               onChange={ (e, val) => {SetSize("outliner", val)}}
               min={2}
               max={64}
+          />
+        </AccordionDetails>
+        </Accordion>
+        <Accordion>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          <FormControlLabel
+            value="colorer"
+            aria-label="Colorer"
+            onClick={(event) => {event.stopPropagation(); setTool("colorer")}}
+            onFocus={(event) => {event.stopPropagation(); setTool("colorer")}}
+            control={<Radio />}
+            label="Colourer"
+          />
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography>Size</Typography>
+          <Slider
+              defaultValue={8}
+              aria-labelledby="continuous-slider"
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {SetSize("colorer", val)}}
+              min={4}
+              max={80}
+          />
+          <Typography>Colour</Typography>
+          <Slider
+              defaultValue={0}
+              valueLabelDisplay="auto"
+              onChange={ (e, val) => {GetBrush("colorer").set_color(val / 100)}}
+              min={0}
+              max={100}
           />
         </AccordionDetails>
         </Accordion>

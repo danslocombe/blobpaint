@@ -7,9 +7,9 @@ use super::utils::{clamp_unit, sqr};
 #[derive(Copy, Clone, Debug)]
 pub enum BrushType {
   Inv,
-  Sqrt,
   Outliner,
   Smudger,
+  Colorer,
 }
 
 impl Default for BrushType {
@@ -104,6 +104,7 @@ pub struct Brush {
   pub paintbrush : Option<Paintbrush>,
   pub outliner : Option<Outliner>,
   pub smudger : Option<Smudger>,
+  pub colorer : Option<Colorer>,
   pub size : f32,
 }
 
@@ -128,6 +129,18 @@ impl Brush {
     brush.outliner = Some(Outliner {
       height: 0.5,
     });
+    brush.size = size;
+
+    brush
+  }
+  
+  pub fn new_colorer(size : f32) -> Self {
+    let mut brush = Brush::default();
+    brush.brush_type = BrushType::Colorer;
+    brush.colorer = Some(Colorer {
+      color : 0.0,
+    });
+
     brush.size = size;
 
     brush
@@ -171,6 +184,7 @@ impl Brush {
   pub fn set_color(&mut self, color: f32) {
     match self.brush_type {
       BrushType::Inv => {self.paintbrush.as_mut().unwrap().color = color},
+      BrushType::Colorer => {self.colorer.as_mut().unwrap().color = color},
       _ => {},
     }
   }
@@ -251,6 +265,27 @@ impl<'t> Brush {
           point_data.thresh_band = (point_data.thresh_band + k).min(outliner_config.height);
         }
       },
+      BrushType::Colorer => {
+        let dist = (sqr(dx) + sqr(dy)).sqrt();
+        let curve = 1.0;
+        let mult = 0.625;
+        let rad = self.size / 2.0;
+
+        let point_data = api.get_mut();
+
+        let colorer_config = self.colorer.as_ref().unwrap();
+        let delta = colorer_config.color - point_data.color_band;
+
+        let k = (1.0 - curve * (dist / rad).sqrt()) * mult;
+        if k > 0.0 {
+          if delta > 0.0 {
+            point_data.color_band = (point_data.color_band + k).min(colorer_config.color);
+          }
+          else {
+            point_data.color_band = (point_data.color_band - k).max(colorer_config.color);
+          }
+        }
+      },
       BrushType::Smudger => {
         let smudge = self.smudger.as_ref().unwrap();
         smudge.apply_smudge(dx, dy, api);
@@ -276,4 +311,10 @@ fn lerp_brush_color(color0 : f32, k : f32, target_color: f32, remove : bool) -> 
   else {
     color0
   })
+}
+
+#[wasm_bindgen]
+#[derive(Copy, Clone, Debug)]
+pub struct Colorer {
+  color : f32,
 }
