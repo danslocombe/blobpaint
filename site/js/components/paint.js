@@ -117,9 +117,14 @@ export function Tick(timestep) {
 
     blobCanvas.tick((1000 * 1000) / framerate);
 
-    const cols = GetPalette();
+    Draw(dt_ms);
+    
+    updateGif();
+    window.requestAnimationFrame(Tick);
+}
 
-    // Draw
+function Draw(dt_ms) {
+    const cols = GetPalette();
     const drawBufSize = blobCanvas.get_draw_buffer_size();
     blobCanvas.fill_draw_buffer();
     const drawBufPtr = blobCanvas.get_draw_buffer();
@@ -145,9 +150,6 @@ export function Tick(timestep) {
         ctx.fillText(Math.floor(fps_avg), 10, 10)
       }
     }
-    
-    updateGif();
-    window.requestAnimationFrame(Tick);
 }
 
 export function SetBlobCanvasThreshBase(x) {

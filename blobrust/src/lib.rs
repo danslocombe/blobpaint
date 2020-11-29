@@ -3,6 +3,7 @@
 
 extern crate rand_core;
 extern crate rand_xorshift;
+extern crate wee_alloc;
 
 mod utils;
 mod pointdata;
@@ -15,15 +16,17 @@ use wasm_bindgen::prelude::*;
 use rand_core::{SeedableRng, RngCore};
 use rand_xorshift::{XorShiftRng};
 
-
 use utils::{rand_unit};
 use pointdata::{PointData, PointDataStore, DirtyRect};
 use brush::{Brush};
 
 const MAX_UNDOS : usize = 8;
 
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 /*
-  Import when debugging
+Import if needed while debugging
 #[wasm_bindgen]
 extern {
   pub fn alert(s: &str);
@@ -143,7 +146,7 @@ impl BlobCanvas {
       let count = ((self.draw_buffer.len() as f32) * 0.95) as usize;
       self.fill_draw_buffer_uniform(count);
 
-      // We know this is safe to do because of is_clean() check failing.
+      // We know this is safe to do because is_clean() check failed.
       let x_range = rect.max_x - rect.min_x;
       let y_range = rect.max_y - rect.min_y;
 
@@ -169,8 +172,6 @@ impl BlobCanvas {
   }
 
   pub fn push_undo(&mut self) {
-    // TODO
-    // Setup ring buffer so we don't have to allocate.
     self.undo_stack.push_back(self.data.get_clone());
 
     while self.undo_stack.len() > MAX_UNDOS {

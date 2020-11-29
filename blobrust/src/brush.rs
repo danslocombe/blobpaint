@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use super::{PointData, CanvasApi};
-use super::utils::{clamp_unit, sqr};
+use super::utils::{clamp_unit, sqr, lerpk, normalize};
 
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
@@ -16,82 +16,6 @@ impl Default for BrushType {
   // Default to basic paintbrush.
   fn default() -> Self {
     BrushType::Inv
-  }
-}
-
-#[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-pub struct Paintbrush {
-  mult: f32,
-  curve: f32,
-  color: f32,
-}
-
-impl Paintbrush {
-  fn sample(&self, dist : f32) -> f32 {
-    self.mult / (1.0 + self.curve * dist)
-  }
-
-  pub fn apply_point_mut(&self, dx : f32, dy : f32, p : &mut PointData, remove : bool) {
-    let dist = (sqr(dx) + sqr(dy)).sqrt();
-    let k = self.sample(dist);
-    p.thresh_band = lerp_brush_thresh(p.thresh_band, k, remove);
-    p.color_band = lerp_brush_color(p.color_band, 4.0*k, self.color, remove);
-  }
-}
-
-#[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-pub struct Outliner {
-  pub height: f32,
-}
-
-#[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-pub struct Smudger {
-  smudge_dist_mult : f32,
-  mult: f32,
-  curve: f32,
-  smudge_vec_x: f32,
-  smudge_vec_y: f32,
-  smudge_vec_x_norm: f32,
-  smudge_vec_y_norm: f32,
-}
-
-fn lerpk(x0: f32, x1: f32, k: f32) -> f32 {
-  (x0 * k + x1) / (k + 1.0)
-}
-
-fn normalize(x : f32, y : f32) -> (f32, f32) {
-  let mag = (sqr(x) + sqr(y)).sqrt();
-  (x / mag, y / mag)
-}
-
-impl<'t> Smudger {
-  pub fn apply_smudge(&self, offset_x : f32, offset_y : f32, mut api : CanvasApi<'t>) {
-
-    // Want to apply smudge only to points in the direction of the smudge
-    // Strength is dot of offset from the brush centre with the smudge vector
-    let offset_dist = (sqr(offset_x) + sqr(offset_x)).sqrt();
-    let (offset_x_norm, offset_y_norm) = (offset_x / offset_dist, offset_y / offset_dist);
-    let strength = (self.smudge_vec_x_norm * offset_x_norm + self.smudge_vec_y * offset_y_norm).max(0.0);
-
-    if strength > 0.0 {
-      // Todo interpolate?
-      let sample_xo = (self.smudge_vec_x * self.smudge_dist_mult) as i32;
-      let sample_yo = (self.smudge_vec_y * self.smudge_dist_mult) as i32;
-
-      match api.try_get_point(sample_xo, sample_yo) {
-        Some(source_smudge) => {
-          let k = 2.0 * (1.0 + offset_dist);
-
-          let mut cur = api.get_mut();
-          cur.thresh_band = lerpk(cur.thresh_band, source_smudge.thresh_band, k);
-          cur.color_band = lerpk(cur.color_band, source_smudge.color_band, k);
-        }
-        _ => {},
-      }
-    }
   }
 }
 
@@ -222,26 +146,16 @@ impl Brush {
     }
   }
   
+  /// Sample external
+  /// At the moment just used for the "curve" ui graph
+  /// so only handles paintbrush case
   pub fn sample(&self, dist : f32) -> f32 {
-    // Just inv atm
     match self.brush_type {
       BrushType::Inv => {
         self.paintbrush.as_ref().unwrap().sample(dist)
       }
       _ => {0.0}
     }
-    /*
-    match self.brush_type {
-      BrushType::Inv => {
-        let inv_dist = 1.0 / (1.0 + self.curve * dist);
-        inv_dist / self.mult
-      },
-      BrushType::Sqrt => {
-        (1.0 - self.curve * dist.sqrt()) / self.mult
-      },
-      _ => 0.0,
-    }
-    */
   }
 }
 
@@ -290,8 +204,28 @@ impl<'t> Brush {
         let smudge = self.smudger.as_ref().unwrap();
         smudge.apply_smudge(dx, dy, api);
       }
-      _ => {},
     }
+  }
+}
+
+#[wasm_bindgen]
+#[derive(Copy, Clone, Debug)]
+pub struct Paintbrush {
+  mult: f32,
+  curve: f32,
+  color: f32,
+}
+
+impl Paintbrush {
+  fn sample(&self, dist : f32) -> f32 {
+    self.mult / (1.0 + self.curve * dist)
+  }
+
+  pub fn apply_point_mut(&self, dx : f32, dy : f32, p : &mut PointData, remove : bool) {
+    let dist = (sqr(dx) + sqr(dy)).sqrt();
+    let k = self.sample(dist);
+    p.thresh_band = lerp_brush_thresh(p.thresh_band, k, remove);
+    p.color_band = lerp_brush_color(p.color_band, 4.0*k, self.color, remove);
   }
 }
 
@@ -311,6 +245,53 @@ fn lerp_brush_color(color0 : f32, k : f32, target_color: f32, remove : bool) -> 
   else {
     color0
   })
+}
+
+#[wasm_bindgen]
+#[derive(Copy, Clone, Debug)]
+pub struct Outliner {
+  pub height: f32,
+}
+
+#[wasm_bindgen]
+#[derive(Copy, Clone, Debug)]
+pub struct Smudger {
+  smudge_dist_mult : f32,
+  mult: f32,
+  curve: f32,
+  smudge_vec_x: f32,
+  smudge_vec_y: f32,
+  smudge_vec_x_norm: f32,
+  smudge_vec_y_norm: f32,
+}
+
+impl<'t> Smudger {
+  pub fn apply_smudge(&self, offset_x : f32, offset_y : f32, mut api : CanvasApi<'t>) {
+
+    // Want to apply smudge only to points in the direction of the smudge
+    // Dot the offset from the brush centre with the smudge vector
+    let offset_dist = (sqr(offset_x) + sqr(offset_x)).sqrt();
+    let (offset_x_norm, offset_y_norm) = (offset_x / offset_dist, offset_y / offset_dist);
+
+    let dot = (self.smudge_vec_x_norm * offset_x_norm + self.smudge_vec_y * offset_y_norm).max(0.0);
+
+    if dot > 0.0 {
+      // Todo interpolate?
+      let sample_xo = (self.smudge_vec_x * self.smudge_dist_mult) as i32;
+      let sample_yo = (self.smudge_vec_y * self.smudge_dist_mult) as i32;
+
+      match api.try_get_point(sample_xo, sample_yo) {
+        Some(source_smudge) => {
+          let k = 2.0 * (1.0 + offset_dist);
+
+          let mut cur = api.get_mut();
+          cur.thresh_band = lerpk(cur.thresh_band, source_smudge.thresh_band, k);
+          cur.color_band = lerpk(cur.color_band, source_smudge.color_band, k);
+        }
+        _ => {},
+      }
+    }
+  }
 }
 
 #[wasm_bindgen]

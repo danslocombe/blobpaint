@@ -105,6 +105,8 @@ impl PointDataStore {
     }
 
     pub fn get_mut(&mut self, x : u32, y : u32) -> &mut PointData {
+        debug_assert!(true);
+        debug_assert!(false);
         let i = self.get_index(x, y);
         &mut self.mut_data[i]
     }
