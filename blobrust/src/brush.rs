@@ -240,11 +240,15 @@ impl<'t> Brush {
         paintbrush.apply_point_mut(dx, dy, api.get_mut(), remove);
       },
       BrushType::Outliner => {
-        let dist = (sqr(dx) + sqr(dy)).sqrt();
         let outliner_config = self.outliner.as_ref().unwrap();
-        if dist < self.size {
+        let dist = (sqr(dx) + sqr(dy)).sqrt();
+        let curve = 1.0;
+        let mult = 0.625 *outliner_config.height;
+        let rad = self.size / 2.0;
+        let k = (1.0 - curve * (dist / rad).sqrt()) * mult;
+        if k > 0.0 {
           let point_data = api.get_mut();
-          point_data.thresh_band = outliner_config.height;
+          point_data.thresh_band = (point_data.thresh_band + k).min(outliner_config.height);
         }
       },
       BrushType::Smudger => {

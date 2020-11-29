@@ -170,7 +170,7 @@ function PaintBrush(props) {
             onClick={(event) => {event.stopPropagation(); setTool("paintbrush")}}
             onFocus={(event) => {event.stopPropagation(); setTool("paintbrush")}}
             control={<Radio />}
-            label="Paintbrush"
+            label="BlobBrush"
           />
         </AccordionSummary>
         <AccordionDetails>
@@ -243,7 +243,7 @@ function PaintBrush(props) {
             onClick={(event) => {event.stopPropagation(); setTool("outliner")}}
             onFocus={(event) => {event.stopPropagation(); setTool("outliner")}}
             control={<Radio />}
-            label="Outliner"
+            label="Pen"
           />
         </AccordionSummary>
         <AccordionDetails>
