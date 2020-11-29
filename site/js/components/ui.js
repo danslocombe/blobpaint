@@ -275,6 +275,7 @@ function PaintBrush(props) {
           />
         </AccordionSummary>
         <AccordionDetails>
+          <div className={classes.root}>
           <Typography>Size</Typography>
           <Slider
               defaultValue={8}
@@ -292,6 +293,7 @@ function PaintBrush(props) {
               min={0}
               max={100}
           />
+          </div>
         </AccordionDetails>
         </Accordion>
         <Accordion>
