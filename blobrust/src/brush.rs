@@ -22,7 +22,6 @@ impl Default for BrushType {
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 pub struct Paintbrush {
-  pub size: u32,
   mult: f32,
   curve: f32,
   color: f32,
@@ -44,7 +43,6 @@ impl Paintbrush {
 #[wasm_bindgen]
 #[derive(Copy, Clone, Debug)]
 pub struct Outliner {
-  pub size: f32,
   pub height: f32,
 }
 
@@ -58,7 +56,6 @@ pub struct Smudger {
   smudge_vec_y: f32,
   smudge_vec_x_norm: f32,
   smudge_vec_y_norm: f32,
-  pub size: u32,
 }
 
 fn lerpk(x0: f32, x1: f32, k: f32) -> f32 {
@@ -116,7 +113,6 @@ impl Brush {
     let mut brush = Brush::default();
     brush.brush_type = BrushType::Inv;
     brush.paintbrush = Some(Paintbrush {
-        size: size,
         mult: mult,
         curve: curve,
         color: 0.0,
@@ -130,7 +126,6 @@ impl Brush {
     let mut brush = Brush::default();
     brush.brush_type = BrushType::Outliner;
     brush.outliner = Some(Outliner {
-      size: size,
       height: 0.5,
     });
     brush.size = size;
@@ -149,7 +144,6 @@ impl Brush {
       smudge_vec_y_norm : 0.0,
       curve: 0.0,
       mult: 0.0,
-      size: size as u32,
     });
     brush.size = size;
 
@@ -158,10 +152,6 @@ impl Brush {
 
   pub fn set_size(&mut self, size : f32) {
     self.size = size;
-    match self.brush_type {
-      BrushType::Outliner => {self.outliner.as_mut().unwrap().size = size / 2.0},
-      _ => {},
-    }
   }
   
   pub fn set_curve(&mut self, curve : f32) {
@@ -252,7 +242,7 @@ impl<'t> Brush {
       BrushType::Outliner => {
         let dist = (sqr(dx) + sqr(dy)).sqrt();
         let outliner_config = self.outliner.as_ref().unwrap();
-        if dist < outliner_config.size {
+        if dist < self.size {
           let point_data = api.get_mut();
           point_data.thresh_band = outliner_config.height;
         }
