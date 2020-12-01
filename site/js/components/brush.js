@@ -1,6 +1,6 @@
 import { Brush } from "../../node_modules/blobrust/blobrust.js"
 
-let brushPaintbrush = Brush.new_inv(40, 6, 1.5);
+let brushPaintbrush = Brush.new_inv(38, 1.2, 0.4);
 let brushOutliner = Brush.new_outliner(8);
 let brushSmudger = Brush.new_smudger(64);
 let brushColorer = Brush.new_colorer(32, 0.5);

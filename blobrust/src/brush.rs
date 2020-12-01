@@ -152,7 +152,7 @@ impl Brush {
   pub fn sample(&self, dist : f32) -> f32 {
     match self.brush_type {
       BrushType::Inv => {
-        self.paintbrush.as_ref().unwrap().sample(dist)
+        self.paintbrush.as_ref().unwrap().sample(dist, 1.0)
       }
       _ => {0.0}
     }
@@ -165,7 +165,7 @@ impl<'t> Brush {
     match self.brush_type {
       BrushType::Inv => {
         let paintbrush = self.paintbrush.as_ref().unwrap();
-        paintbrush.apply_point_mut(dx, dy, api.get_mut(), remove);
+        paintbrush.apply_point_mut(dx, dy, api.get_mut(), remove, self.size);
       },
       BrushType::Outliner => {
         let outliner_config = self.outliner.as_ref().unwrap();
@@ -173,10 +173,20 @@ impl<'t> Brush {
         let curve = 1.0;
         let mult = 0.625 *outliner_config.height;
         let rad = self.size / 2.0;
-        let k = (1.0 - curve * (dist / rad).sqrt()) * mult;
+        let mut k = (1.0 - curve * (dist / rad).sqrt()) * mult;
         if k > 0.0 {
           let point_data = api.get_mut();
-          point_data.thresh_band = (point_data.thresh_band + k).min(outliner_config.height);
+
+          if point_data.thresh_band > outliner_config.height {
+            k *= -1.3;
+            point_data.thresh_band = (point_data.thresh_band + k).max(outliner_config.height);
+          }
+          else {
+            if point_data.thresh_band < outliner_config.height / 2.0 {
+              k *= 3.25;
+            }
+            point_data.thresh_band = (point_data.thresh_band + k).min(outliner_config.height);
+          }
         }
       },
       BrushType::Colorer => {
@@ -217,15 +227,19 @@ pub struct Paintbrush {
 }
 
 impl Paintbrush {
-  fn sample(&self, dist : f32) -> f32 {
-    self.mult / (1.0 + self.curve * dist)
+  fn sample(&self, dist : f32, size: f32) -> f32 {
+    //self.mult / (1.0 + self.curve * dist)
+    let rad = size / 2.0;
+    (1.0 - self.curve * (dist / rad).sqrt()) * self.mult
   }
 
-  pub fn apply_point_mut(&self, dx : f32, dy : f32, p : &mut PointData, remove : bool) {
+  pub fn apply_point_mut(&self, dx : f32, dy : f32, p : &mut PointData, remove : bool, size: f32) {
     let dist = (sqr(dx) + sqr(dy)).sqrt();
-    let k = self.sample(dist);
-    p.thresh_band = lerp_brush_thresh(p.thresh_band, k, remove);
-    p.color_band = lerp_brush_color(p.color_band, 4.0*k, self.color, remove);
+    let k = self.sample(dist, size);
+    if k > 0.0 {
+      p.thresh_band = lerp_brush_thresh(p.thresh_band, k, remove);
+      p.color_band = lerp_brush_color(p.color_band, 1.0*k, self.color, remove);
+    }
   }
 }
 

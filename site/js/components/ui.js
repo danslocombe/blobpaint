@@ -178,33 +178,33 @@ function PaintBrush(props) {
           <div>
           <Typography>Size</Typography>
           <Slider
-              defaultValue={40}
+              defaultValue={38}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetSize("paintbrush", val)}}
-              min={2}
-              max={64}
+              min={8}
+              max={200}
           />
           <Typography variant="h4">Shape</Typography>
           <Typography>Curve</Typography>
           <Slider
-              defaultValue={60}
+              defaultValue={12}
               //getAriaValueText={valuetext}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {GetBrush().set_curve(val / 10); renderBrushConfig()}}
-              min={0}
-              max={400}
+              min={8}
+              max={32}
           />
           <Typography>Strength</Typography>
           <Slider
-              defaultValue={150}
+              defaultValue={40}
               //getAriaValueText={valuetext}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {GetBrush().set_mult(val / 100); renderBrushConfig()}}
-              min={1}
-              max={250}
+              min={4}
+              max={64}
           />
           <canvas id="brushcurve">
           </canvas>
