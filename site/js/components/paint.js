@@ -168,6 +168,10 @@ export function ClearCanvas() {
   blobCanvas.clear();
 }
 
+export function FlipCanvas() {
+  blobCanvas.flip_hoz();
+}
+
 canvas.addEventListener('mousemove', event => {
     let rect = canvas.getBoundingClientRect();
     mouseX = (event.clientX - rect.left) / rect.width;

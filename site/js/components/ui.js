@@ -20,7 +20,7 @@ import Tab from '@material-ui/core/Tab';
 import { createMuiTheme, makeStyles, ThemeProvider } from '@material-ui/core/styles';
 
 import { GetBrush, RenderBrushGraph, ResetOutliner, ResetPaintbrush, ResetSmudger, ResetColorer, SetSize, SetOutlinerHeight} from './brush.js';
-import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult, Undo, ClearCanvas} from "./paint.js";
+import {StartCapture, ResetCapture, SetBlobCanvasThreshBase, SetBlobCanvasThreshTVar, SetBlobCanvasThreshTMult, Undo, ClearCanvas, FlipCanvas} from "./paint.js";
 import {GetPaletteName, NextPalette, PrevPalette} from './palette.js';
 
 const theme = createMuiTheme({
@@ -450,8 +450,9 @@ function ResetUndoUI() {
   return (
     <div className={classes.root}>
     <div className={classSpacing.root}>
-    <Button key="0" variant="outlined" color="primary" onClick={(evt) => {Undo()}}> Undo </Button>
-    <Button key="1" variant="outlined" color="secondary" onClick={(evt) => {ClearCanvas()}}> Clear </Button>
+    <Button key="0" variant="outlined" color="primary" onClick={(evt) => {FlipCanvas()}}> FLIP </Button>
+    <Button key="1" variant="outlined" color="primary" onClick={(evt) => {Undo()}}> Undo </Button>
+    <Button key="2" variant="outlined" color="secondary" onClick={(evt) => {ClearCanvas()}}> Clear </Button>
     </div>
     </div>
   );

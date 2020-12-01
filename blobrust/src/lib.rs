@@ -189,6 +189,10 @@ impl BlobCanvas {
     }
   }
 
+  pub fn flip_hoz(&mut self) {
+    self.data.flip_hoz();
+  }
+
   pub fn clear(&mut self) {
     self.push_undo();
     self.data = empty_canvas_data(self.width, self.height, &mut self.rng)

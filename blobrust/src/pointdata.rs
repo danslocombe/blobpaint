@@ -59,6 +59,15 @@ impl DirtyRect {
             max_y : 0,
         }
     }
+
+    pub fn all_dirty(width: u32, height : u32) -> Self {
+        DirtyRect {
+            min_x : 0,
+            min_y : 0,
+            max_x : width,
+            max_y : height,
+        }
+    }
 }
 
 /// Contains a mutable and immutable copy of the same data.
@@ -136,6 +145,17 @@ impl PointDataStore {
 
     pub fn get_clone(&self) -> Vec<PointData> {
         self.mut_data.clone()
+    }
+
+    pub fn flip_hoz(&mut self) {
+        self.dirty = DirtyRect::all_dirty(self.width, self.height);
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let i = self.get_index(x, y);
+                let isrc = self.get_index(self.width - x - 1, y);
+                self.mut_data[i] = self.imm_data[isrc].clone();
+            }
+        }
     }
 
     /// Flush the mutable data and copy it into the immutable buffer.
