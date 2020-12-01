@@ -1,7 +1,16 @@
 
 const palettes = [
     {
-        name: "Old desert",
+        name: "Pico 8",
+        data: [
+            "#ff77a8",
+            "#83769c",
+            "#ffccaa",
+            "#000000",
+        ]
+    },
+    {
+        name: "Old Desert",
         data: [
             "#FFFF88",
             "#FFAA88",
@@ -10,13 +19,30 @@ const palettes = [
         ]
     },
     {
+        name: "Garden Snail",
+        data: [
+            "#abbc60",
+            "#6f7ba3",
+            "#704b30",
+            "#211e19",
+        ]
+    },
+    {
         name: "Gaudy Gaudi",
         data: [
             "#F032BC",
             "#864BE7",
-            //"#FFC551",
             "#F9F871",
             "#000000",
+        ]
+    },
+    {
+        name: "Geg",
+        data: [
+            "#766c91",
+            "#813b3d",
+            "#f9c885",
+            "#523b58",
         ]
     },
     {

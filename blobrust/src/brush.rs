@@ -58,11 +58,11 @@ impl Brush {
     brush
   }
   
-  pub fn new_colorer(size : f32) -> Self {
+  pub fn new_colorer(size : f32, color : f32) -> Self {
     let mut brush = Brush::default();
     brush.brush_type = BrushType::Colorer;
     brush.colorer = Some(Colorer {
-      color : 0.0,
+      color : color,
     });
 
     brush.size = size;

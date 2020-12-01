@@ -1,9 +1,9 @@
 import { Brush } from "../../node_modules/blobrust/blobrust.js"
 
-let brushPaintbrush = Brush.new_inv(32, 6, 1.25);
+let brushPaintbrush = Brush.new_inv(40, 6, 1.5);
 let brushOutliner = Brush.new_outliner(8);
 let brushSmudger = Brush.new_smudger(64);
-let brushColorer = Brush.new_colorer(12);
+let brushColorer = Brush.new_colorer(32, 0.5);
 let brush = brushPaintbrush;
 
 export function SetSize(brush, size) {
@@ -18,7 +18,7 @@ export function SetSize(brush, size) {
       brushSmudger.set_size(size);
       break;
     case "colorer":
-      brushSmudger.set_size(size);
+      brushColorer.set_size(size);
       break;
   }
 }

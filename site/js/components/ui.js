@@ -178,7 +178,7 @@ function PaintBrush(props) {
           <div>
           <Typography>Size</Typography>
           <Slider
-              defaultValue={32}
+              defaultValue={40}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetSize("paintbrush", val)}}
@@ -198,7 +198,7 @@ function PaintBrush(props) {
           />
           <Typography>Strength</Typography>
           <Slider
-              defaultValue={125}
+              defaultValue={150}
               //getAriaValueText={valuetext}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
@@ -278,7 +278,7 @@ function PaintBrush(props) {
           <div className={classes.root}>
           <Typography>Size</Typography>
           <Slider
-              defaultValue={8}
+              defaultValue={32}
               aria-labelledby="continuous-slider"
               valueLabelDisplay="auto"
               onChange={ (e, val) => {SetSize("colorer", val)}}
@@ -287,7 +287,7 @@ function PaintBrush(props) {
           />
           <Typography>Colour</Typography>
           <Slider
-              defaultValue={0}
+              defaultValue={50}
               valueLabelDisplay="auto"
               onChange={ (e, val) => {GetBrush("colorer").set_color(val / 100)}}
               min={0}
