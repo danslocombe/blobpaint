@@ -370,6 +370,15 @@ function PaintBrush(props) {
         </Accordion>
         <PaletteUI />
         <ResetUndoUI />
+        <Typography>
+        Source code on <a href="https://github.com/danslocombe/blobpaint/">github</a>.
+        </Typography>
+        <Typography>
+        Blobpaint Gallery <a href="https://danslocom.be/blobpaint-alpha/gallery">here</a>!
+        </Typography>
+        <Typography>
+        Dan Slocombe 2021
+        </Typography>
         </div>
     );
 }
