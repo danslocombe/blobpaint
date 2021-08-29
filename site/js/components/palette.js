@@ -63,6 +63,15 @@ const palettes = [
             "#0A0A0A",
         ]
     },
+    {
+        name: "Giraffe",
+        data: [
+            "#eecd96",
+            "#a34e01",
+            "#78b3ea",
+            "#000000",
+        ]
+    },
 ]
 
 
