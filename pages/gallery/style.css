@@ -1,0 +1,39 @@
+img { 
+    image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+    image-rendering: -moz-crisp-edges;          /* Firefox                        */
+    image-rendering: -o-crisp-edges;            /* Opera                          */
+    image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+    image-rendering: pixelated; /* Chrome */
+    image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
+
+}
+
+body {
+    background-color:#f8f8f5;
+    font-family: sans-serif;
+}
+
+.container {
+	width: auto;
+	max-width: 100%;
+	margin: auto;
+	margin-top: 0;
+	padding: 2rem;
+	max-height: calc(100vh - 4rem);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+figure {
+    display: inline-block;
+    margin: 2rem;
+}
+figure img {
+    vertical-align: top;
+}
+figure figcaption {
+    text-align: center;
+    margin: 2rem;
+}
