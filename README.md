@@ -4,7 +4,7 @@
 ![img](https://raw.githubusercontent.com/danslocombe/blobpaint/master/snail.gif "Snail!")
 ![img](https://github.com/danslocombe/blobpaint-web/raw/master/domblob.gif "Credit to Dominic Englebright")
 
-### Hosted here https://danslocombe.github.io/blobpaint/pages/
+### Hosted here https://www.blobpaint.net
 
 ---
 
