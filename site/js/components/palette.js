@@ -72,6 +72,15 @@ const palettes = [
             "#000000",
         ]
     },
+    {
+        name: "Tiger",
+        data: [
+            "#ffa000",
+            "#ebd91a",
+            "#fef1eb",
+            "#000000",
+        ]
+    },
 ]
 
 
